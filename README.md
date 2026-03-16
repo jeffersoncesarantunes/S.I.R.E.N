@@ -140,12 +140,19 @@ Requirements:
 - Netcat (for remote exfiltration)
 - Bash 4.x or higher
 
-Build and Execute:
+## ● Build and Run
 
 ```bash
+# Clone the repository
 git clone https://github.com/jeffersoncesarantunes/S.I.R.E.N.git
+
+# Enter the project directory
 cd S.I.R.E.N
+
+# Make the script executable
 chmod +x src/siren.sh
+
+# Run S.I.R.E.N (requires root privileges)
 sudo ./src/siren.sh
 ```
 
