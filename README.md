@@ -1,6 +1,11 @@
 # 🐧 S.I.R.E.N - Shell Interactive Runtime Entity Notifier
 
 High-speed Linux memory forensics tool for live acquisition, streaming and integrity auditing.
+> **Project:** S.I.R.E.N (Shell Interactive Runtime Entity Notifier)
+> **Author:** Jefferson Cesar Antunes
+> **License:** MIT
+> **Version:** 1.0.0
+> **Description:** High-speed Linux memory forensics tool for live acquisition, streaming and integrity auditing.
 
 [![Linux](https://img.shields.io/badge/platform-linux-blue)](https://kernel.org)
 [![Bash](https://img.shields.io/badge/language-bash-green)](https://www.gnu.org)
@@ -8,12 +13,11 @@ High-speed Linux memory forensics tool for live acquisition, streaming and integ
 ![Version](https://img.shields.io/badge/version-1.3.0-orange)
 ![Status](https://img.shields.io/badge/status-active-success)
 
-## 🌐 Contact
+## ● Contact
 
 [![Discord](https://img.shields.io/badge/Discord-Jefferson-5865F2?logo=discord&logoColor=white)](https://discord.com/users/1476405883733807247)
 [![X](https://img.shields.io/badge/@j3ff3rsonc3sar-000000?logo=x&logoColor=white)](https://x.com/j3ff3rsonc3sar)
 [![Mastodon](https://img.shields.io/badge/Mastodon-@jeffersoncesar-6364FF?logo=mastodon&logoColor=white)](https://mastodon.social/@jeffersoncesar)
-
 
 ## ● Etymology & Origin
 
