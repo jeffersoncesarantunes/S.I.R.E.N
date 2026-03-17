@@ -8,8 +8,6 @@ High-speed Linux memory forensics tool for live acquisition, streaming and integ
 ![Version](https://img.shields.io/badge/version-1.3.0-orange)
 ![Status](https://img.shields.io/badge/status-active-success)
 
----
-
 ## ● Project Information
 
 - **Project:** S.I.R.E.N (Shell Interactive Runtime Entity Notifier)
@@ -17,8 +15,6 @@ High-speed Linux memory forensics tool for live acquisition, streaming and integ
 - **License:** MIT
 - **Version:** 1.0.0
 - **Description:** High-speed Linux memory forensics tool for live acquisition, streaming and integrity auditing.
-
----
 
 ## ● Contact
 
