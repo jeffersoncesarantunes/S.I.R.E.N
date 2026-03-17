@@ -2,6 +2,12 @@
 
 High-speed Linux memory forensics tool for live acquisition, streaming and integrity auditing.
 
+[![Linux](https://img.shields.io/badge/platform-linux-blue)](https://kernel.org)
+[![Bash](https://img.shields.io/badge/language-bash-green)](https://www.gnu.org)
+[![License](https://img.shields.io/badge/license-MIT-red)](LICENSE)
+![Version](https://img.shields.io/badge/version-1.3.0-orange)
+![Status](https://img.shields.io/badge/status-active-success)
+
 ---
 
 ## ● Project Information
@@ -13,12 +19,6 @@ High-speed Linux memory forensics tool for live acquisition, streaming and integ
 - **Description:** High-speed Linux memory forensics tool for live acquisition, streaming and integrity auditing.
 
 ---
-
-[![Linux](https://img.shields.io/badge/platform-linux-blue)](https://kernel.org)
-[![Bash](https://img.shields.io/badge/language-bash-green)](https://www.gnu.org)
-[![License](https://img.shields.io/badge/license-MIT-red)](LICENSE)
-![Version](https://img.shields.io/badge/version-1.3.0-orange)
-![Status](https://img.shields.io/badge/status-active-success)
 
 ## ● Contact
 
