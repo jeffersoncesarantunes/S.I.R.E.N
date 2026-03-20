@@ -169,13 +169,14 @@ sudo ./src/siren.sh
 ## ● Repository Structure
 
 ```text
-├── docs/          # Forensic methodology and documentation
-├── dumps/         # Local acquisition results (.gitkeep)
-├── Imagens/       # Project screenshots and assets
-├── src/           # Main S.I.R.E.N bash script (siren.sh)
-├── LICENSE        # MIT License
-└── README.md      # Project overview and usage
-```
+├── docs/               # Technical documentation & Forensic methodology
+├── dumps/              # Acquisition output (Local only - .gitignore)
+├── Imagens/            # S.I.R.E.N screenshots and execution flow
+├── src/                # Core implementation and main script
+│   └── siren.sh        # S.I.R.E.N main execution logic (Bash)
+├── .gitignore          # Prevents leaking forensic dumps to the cloud
+├── LICENSE             # MIT License terms
+└── README.md           # Project entry point and manual
 
 ## ● Troubleshooting: Kernel Restrictions
 
