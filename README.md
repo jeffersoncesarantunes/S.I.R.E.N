@@ -177,6 +177,7 @@ sudo ./src/siren.sh
 ├── .gitignore          # Prevents leaking forensic dumps to the cloud
 ├── LICENSE             # MIT License terms
 └── README.md           # Project entry point and manual
+``` 
 
 ## ● Troubleshooting: Kernel Restrictions
 
