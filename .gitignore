@@ -1,16 +1,40 @@
-# Ignorar binários e dumps de memória
-dumps/*.bin
-dumps/*.raw
-dumps/*.dmp
+# ==============================================================================
+# S.I.R.E.N - Git Ignore Configuration
+# Professional Forensic Data Protection
+# ==============================================================================
 
-# Ignorar logs e análises forenses
-dumps/*.txt
-dumps/*.sha256
-dumps/*.log
-
-# Manter a pasta, mas ignorar o conteúdo
+# Forensic Evidence & Dumps (STRICT PROTECTION)
+# ------------------------------------------------------------------------------
+# We ignore the entire dumps directory to prevent accidental exposure of 
+# volatile memory data (RAM), sensitive strings, or system hashes.
+dumps/
 !dumps/.gitkeep
 
-# Arquivos temporários do sistema
+# Acquisition Artifacts
+# ------------------------------------------------------------------------------
+*.raw
+*.bin
+*.dmp
+*.mem
+*.img
+
+# Analysis Reports
+# ------------------------------------------------------------------------------
+*.txt
+*.log
+*.csv
+*.json
+*.sha256
+
+# Development & OS Artifacts
+# ------------------------------------------------------------------------------
+# Linux/Arch Linux swap files
+*.swp
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# macOS/Windows compatibility
 .DS_Store
 Thumbs.db
