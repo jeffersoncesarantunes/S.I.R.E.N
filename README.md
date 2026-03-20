@@ -169,7 +169,6 @@ sudo ./src/siren.sh
 ## ● Repository Structure
 
 ```text
-
 ├── docs/          # Forensic methodology and documentation
 ├── dumps/         # Local acquisition results (.gitkeep)
 ├── Imagens/       # Project screenshots and assets
