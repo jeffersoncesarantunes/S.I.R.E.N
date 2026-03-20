@@ -166,6 +166,17 @@ chmod +x src/siren.sh
 # Run S.I.R.E.N (requires root privileges)
 sudo ./src/siren.sh
 ```
+## ● Repository Structure
+
+```text
+
+├── docs/          # Forensic methodology and documentation
+├── dumps/         # Local acquisition results (.gitkeep)
+├── Imagens/       # Project screenshots and assets
+├── src/           # Main S.I.R.E.N bash script (siren.sh)
+├── LICENSE        # MIT License
+└── README.md      # Project overview and usage
+```
 
 ## ● Troubleshooting: Kernel Restrictions
 
