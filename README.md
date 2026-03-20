@@ -85,7 +85,11 @@ This feature allows the extraction of RAM without writing a large file to the ta
 1. On Forensic Workstation (Receiver)
 
 ```bash
-nc -l -p 4444 > remote_mem_dump.bin
+# If using ZSTD (Recommended)
+nc -l -p 4444 | zstd -d > remote_mem_dump.bin
+
+# If using GZIP (Fallback)
+nc -l -p 4444 | gunzip > remote_mem_dump.bin
 ```
 
 2. On Target Machine (S.I.R.E.N)
@@ -179,8 +183,8 @@ To bypass this for forensic purposes, add iomem=relaxed to your boot parameters 
 
 - [x] Automated safe-range extraction with kernel-level error handling.
 - [x] Pre-flight network connectivity validation (Option 5).
-- [ ] Integrated RAM compression during exfiltration (zstd/gzip).
-- [ ] Support for Lime/LiME memory drivers.
+- [x] Integrated RAM compression during exfiltration (zstd/gzip).
+- [ ] Support for LiME (Linux Memory Extractor) kernel modules.
 - [ ] JSON metadata report generation (Forensic Timeline).
 
 ## ● License

@@ -114,6 +114,17 @@ remote_forensic_stream() {
     fi
     echo -e "${GREEN}[READY]${NC}"
 
+    local compressor="cat"
+    if command -v zstd >/dev/null 2>&1; then
+        compressor="zstd -1 --threads=0"
+        echo -e "${GREEN}[+] Using ZSTD compression (High Speed)${NC}"
+    elif command -v gzip >/dev/null 2>&1; then
+        compressor="gzip -1"
+        echo -e "${YELLOW}[+] Using GZIP compression (Fallback)${NC}"
+    else
+        echo -e "${RED}[!] No compressor found. Sending raw data.${NC}"
+    fi
+
     local timestamp=$(date +%Y%m%d_%H%M%S)
     local output_dir="../dumps"
     mkdir -p "$output_dir"
@@ -121,8 +132,10 @@ remote_forensic_stream() {
     echo -e "${GREEN}[+] Streaming memory to $target_ip:$target_port...${NC}"
     echo -e "${YELLOW}[*] Calculating local integrity hash (SHA256) during stream...${NC}"
 
-    if dd if=/dev/mem bs=1M count=100 2>/dev/null | tee >(sha256sum > "$output_dir/remote_stream_$timestamp.sha256") | nc "$target_ip" "$target_port"; then
-        echo -e "${GREEN}[+] Remote stream finished.${NC}"
+    if dd if=/dev/mem bs=1M count=100 2>/dev/null | \
+       tee >(sha256sum > "$output_dir/remote_stream_$timestamp.sha256") | \
+       $compressor | nc "$target_ip" "$target_port"; then
+        echo -e "${GREEN}[+] Remote stream finished successfully.${NC}"
     else
         echo -e "${RED}[!] Stream interrupted. Potential Kernel restriction (STRICT_DEVMEM).${NC}"
         echo -e "${YELLOW}[i] Hint: Try booting with 'iomem=relaxed'.${NC}"
