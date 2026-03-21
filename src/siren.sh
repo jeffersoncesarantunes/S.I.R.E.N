@@ -166,7 +166,7 @@ while true; do
         4) automated_extraction ;;
         5) remote_forensic_stream ;;
         6) 
-            echo -e "${YELLOW}Exiting SIREN...${NC}"
+            echo -e "${YELLOW}Exiting S.I.R.E.N...${NC}"
             exit 0 
             ;;
         *) 
