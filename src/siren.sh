@@ -144,7 +144,7 @@ remote_forensic_stream() {
 
 while true; do
     clear
-    echo -e "${GREEN}🐧 S.I.R.E.N. - Shell Interactive Runtime Entity Notifier${NC}"
+    echo -e "${GREEN}🐧 S.I.R.E.N - Shell Interactive Runtime Entity Notifier${NC}"
     echo "---------------------------------------------------------"
     echo -e "1) Map Memory (iomem)"
     echo -e "2) Test Pipeline (/proc/version)"
