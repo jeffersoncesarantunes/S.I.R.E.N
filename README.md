@@ -50,17 +50,16 @@ All inspection is designed to minimize the forensic footprint on the target syst
 
 ## ● Example Output
 
-```text
-┌────────────────────────────────────────┐
-│ [+] Mapping safe System RAM regions... │
-├────────────────────────────────────────┤
-│ Address: 00001000-0009fbff [SAFE RANGE]│
-│ Address: 00100000-b697efff [SAFE RANGE]│
-└────────────────────────────────────────┘
+```bash
+# SIREN Output: Mapping System RAM
+[+] Mapping safe System RAM regions...
 
 [!] Starting acquisition from: /dev/mem
+[+] Address: 00001000-0009fbff [SAFE RANGE]
+[+] Address: 00100000-b697efff [SAFE RANGE]
 [+] Pipeline completed successfully
-```
+``` 
+
 ## ● Project in Action
 
 ![Memory Mapping](./Imagens/siren1.png)
