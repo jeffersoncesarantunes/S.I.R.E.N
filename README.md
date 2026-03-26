@@ -67,7 +67,7 @@ All inspection is designed to minimize the forensic footprint on the target syst
 *1- Detection of safe System RAM regions using /proc/iomem.*
 
 ![Pipeline Validation](./Imagens/siren2.png)
-*2- Acquisition pipeline validation before performing live memory extraction.*
+*2- Automated Safe Scan: Performing memory range extraction while respecting Kernel-level restrictions (e.g., CONFIG_STRICT_DEVMEM).*
 
 ![Remote Forensic Streaming](./Imagens/siren3.png)
 *3- Remote forensic memory streaming using Netcat with live SHA256 integrity verification.*
