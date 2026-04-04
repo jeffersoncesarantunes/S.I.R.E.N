@@ -10,16 +10,6 @@ High-speed Linux memory forensics tool for live acquisition, streaming, and fore
 
 ---
 
-## ● Project Information
-
-- **Project:** S.I.R.E.N (Shell Interactive Runtime Entity Notifier)
-- **Author:** Jefferson Cesar Antunes
-- **License:** MIT
-- **Version:** 1.3.0
-- **Description:** High-speed Linux memory forensics tool for live acquisition, streaming and integrity auditing.
-
----
-
 ## ● Etymology & Origin
 
 The name **S.I.R.E.N** is a recursive acronym that reflects the tool's dual nature: an alert system and a data harvester.
@@ -32,13 +22,10 @@ In forensic mythology, the Siren calls for the truth hidden within the depths. I
 
 S.I.R.E.N is a specialized forensic utility designed for high-speed memory acquisition and real-time integrity auditing.
 
-It bypasses traditional file-first dumping by implementing a streaming pipeline that allows analysts to:
-
-- Identify safe System RAM regions
-- Perform live forensic exfiltration via network sockets
-- Calculate integrity hashes (SHA256) and extract strings simultaneously
-
-The tool is written in pure Bash, ensuring zero-dependency operation in emergency incident response scenarios.
+**Core Capabilities:**
+- **Zero-Footprint:** Live forensic exfiltration via network sockets.
+- **Parallel Processing:** Calculates SHA256 hashes and extracts strings simultaneously.
+- **Kernel Awareness:** Maps safe System RAM regions via `/proc/iomem`.
 
 ---
 
@@ -118,7 +105,7 @@ When performing Option 3 (Live Memory Extraction), the system accesses \`/dev/me
 - Real-time string extraction
 - Pre-acquisition disk space verification
 - \`/proc/iomem\` safe-range mapping
-- - Linux CONFIG_STRICT_DEVMEM restriction detection
+- Linux CONFIG_STRICT_DEVMEM restriction detection
 
 ---
 
@@ -176,7 +163,7 @@ cd S.I.R.E.N
 # 2. Setup
 chmod +x src/siren.sh
 
-# 3. Run
+# 3. Run (root privileges required)
 sudo ./src/siren.sh
 ```
 
@@ -229,7 +216,16 @@ to your boot parameters and reboot.
 
 ---
 
+## ● Documentation
+
+[![Docs-Acquisition](https://img.shields.io/badge/Acquisition-Model-00599C?style=flat-square&logo=linux&logoColor=white)](./docs/ACQUISITION_MODEL.md)
+[![Docs-Workflow](https://img.shields.io/badge/Forensic-Workflow-444444?style=flat-square&logo=gnu-bash&logoColor=white)](./docs/FORENSIC_WORKFLOW.md)
+[![Docs-Safety](https://img.shields.io/badge/Safety-Model-CC0000?style=flat-square&logo=opensourceinitiative&logoColor=white)](./docs/SAFETY_MODEL.md)
+
+---
+
 ## ● License
 
-Distributed under the MIT License. See LICENSE for details.
+[![License-MIT](https://img.shields.io/badge/License-MIT-EE0000?style=flat-square&logo=opensourceinitiative&logoColor=white)](./LICENSE)
 
+*This project is licensed under the MIT License.*

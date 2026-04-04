@@ -38,3 +38,11 @@ dumps/
 # macOS/Windows compatibility
 .DS_Store
 Thumbs.db
+
+# Forensic outputs
+dumps/
+*.bin
+*.raw
+*.txt
+*.sha256
+
