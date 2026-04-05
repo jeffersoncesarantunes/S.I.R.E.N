@@ -5,7 +5,6 @@ High-speed Linux memory forensics tool for live acquisition, streaming, and fore
 [![Platform-Linux](https://img.shields.io/badge/Platform-Linux-1793D1?style=flat-square&logo=linux&logoColor=white)](https://kernel.org)
 [![Language-Bash](https://img.shields.io/badge/Language-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
 [![License-MIT](https://img.shields.io/badge/License-MIT-EE0000?style=flat-square&logo=license&logoColor=white)](LICENSE)
-![Version](https://img.shields.io/badge/Version-1.3.0-333333?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Active-00FF41?style=flat-square)
 
 ---
