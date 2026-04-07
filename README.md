@@ -96,20 +96,27 @@ S.I.R.E.N is designed for forensic stability:
 ### 1. Integrity Verification
 
 ```bash
-sha256sum -c mem_dump_*.bin.sha256
+sha256sum -c dumps/*.bin.sha256
 ```
 
 ### 2. Optional String Extraction (On-Demand)
 
 ```bash
-strings mem_dump_*.bin | grep -Ei "pass|user|config"
+strings dumps/*.bin | grep -Ei "pass|token|config|secret" | grep -v "/usr/" | head -n 50
 ```
 
 ### 3. Hexadecimal Inspection
 
 ```bash
-hexdump -C mem_dump_*.bin | head -n 20
+hexdump -C dumps/*.bin | head -n 20
 ```
+
+#### 4. Audit Log Inspection
+
+```bash
+column -s, -t < dumps/manifest.csv
+```
+
 ---
 
 ## ● Deployment
