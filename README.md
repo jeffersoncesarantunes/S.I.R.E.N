@@ -125,7 +125,7 @@ hexdump -C mem_dump_*.bin | head -n 20
 
 ```bash
 # 1. Clone the repository
-git clone [https://github.com/jeffersoncesarantunes/S.I.R.E.N.git](https://github.com/jeffersoncesarantunes/S.I.R.E.N.git)
+git clone https://github.com/jeffersoncesarantunes/S.I.R.E.N.git
 
 # 2. Enter the directory
 cd S.I.R.E.N
