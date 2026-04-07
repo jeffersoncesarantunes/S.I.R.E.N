@@ -6,10 +6,11 @@ This document describes the internal logic used by S.I.R.E.N to safely acquire p
 
 ## 1. Data Sources
 
-S.I.R.E.N relies on two kernel-exposed interfaces:
+S.I.R.E.N relies on kernel-exposed interfaces:
 
 - `/proc/iomem` → memory map classification
-- `/dev/mem` → raw physical memory access
+- `/dev/mem` → partial raw physical memory access
+- `/proc/kcore` → full memory acquisition interface
 
 ---
 
@@ -20,39 +21,37 @@ The tool parses `/proc/iomem` to identify memory regions labeled as:
 - System RAM (safe for acquisition)
 - Reserved / Hardware-mapped regions (unsafe)
 
-Only **System RAM** ranges are selected for extraction.
+Only **System RAM** ranges are selected when using `/dev/mem`.
 
 ---
 
-## 3. Safe Range Extraction
+## 3. Acquisition Modes
 
-Each valid region is processed as:
+S.I.R.E.N supports two acquisition strategies:
 
-- Start address → End address
-- Converted into block ranges
-- Sequentially read using controlled offsets
+### a) Controlled Extraction (`/dev/mem`)
 
-This ensures:
+- Limited memory extraction (default capped size)
+- Used for safe testing and validation
+- May be restricted by kernel protections
 
-- No access to restricted hardware zones
-- Reduced risk of kernel-triggered faults
+### b) Full Memory Extraction (`/proc/kcore`)
+
+- Reads memory based on total physical RAM size
+- Used when `/dev/mem` is restricted
+- Produces large-scale dumps
 
 ---
 
-## 4. Streaming Pipeline
+## 4. Acquisition Workflow
 
-Instead of writing raw dumps first, S.I.R.E.N uses a pipeline:
+The acquisition process follows:
 
-- Memory → `dd`
-- Stream → `sha256sum`
-- Stream → `strings`
-- Optional → `nc` (network transmission)
-
-This allows:
-
-- Real-time integrity validation
-- Simultaneous artifact extraction
-- Reduced disk footprint
+1. Data is read from the selected source
+2. Raw memory is written to a dump file
+3. SHA256 hash is generated
+4. Strings are extracted for analysis
+5. JSON report and CSV manifest are created
 
 ---
 
@@ -64,18 +63,19 @@ Modern Linux systems may enforce:
 
 When enabled:
 
-- Access is limited to first 1MB of memory
-- Remaining reads return denied or zeroed data
+- `/dev/mem` access is limited
+- Full acquisition may require `/proc/kcore`
 
 ---
 
 ## 6. Limitations
 
 - Requires root privileges
-- May be restricted by kernel hardening
-- Not suitable for full forensic imaging in hardened systems
+- `/dev/mem` may be restricted
+- `/proc/kcore` output may include kernel abstractions
+- Not a replacement for dedicated forensic frameworks (e.g., LiME)
 
 ---
 
-*This model prioritizes safety, speed, and minimal system impact.*
+*This model prioritizes safety, traceability, and controlled acquisition.*
 

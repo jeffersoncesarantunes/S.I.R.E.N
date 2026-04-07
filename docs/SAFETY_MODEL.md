@@ -18,15 +18,15 @@ All operations are passive.
 
 ## 2. Controlled Memory Access
 
-Access to `/dev/mem` is restricted to:
+Access is performed via:
 
-- Valid System RAM regions
-- Verified safe offsets
+- `/dev/mem` (restricted access)
+- `/proc/kcore` (alternative interface)
 
-This avoids:
+When using `/dev/mem`:
 
-- Hardware-mapped memory
-- Kernel-critical regions
+- Only valid System RAM regions are targeted
+- Unsafe regions are avoided
 
 ---
 
@@ -34,18 +34,18 @@ This avoids:
 
 To prevent system instability:
 
-- Unsafe regions are skipped
-- Non-responsive reads are avoided
+- Memory regions are validated before access
+- Disk space is checked before acquisition
 - Kernel restrictions are respected
 
 ---
 
-## 4. ACTION REQUIRED Mechanism
+## 4. User Confirmation
 
-Certain operations require user confirmation:
+Certain operations require explicit user interaction:
 
 - Direct memory extraction
-- Potentially unsafe reads
+- Full memory acquisition
 
 This ensures:
 
@@ -67,10 +67,11 @@ If access is denied:
 
 The tool ensures:
 
-- Real-time SHA256 hashing
-- Immutable acquisition flow
-- Verifiable output artifacts
+- SHA256 hashing after acquisition
+- Structured JSON reporting
+- Persistent CSV logging (manifest)
 
 ---
 
-*Safety is prioritized over completeness in all acquisition scenarios.*
+*Safety and evidence integrity are prioritized over completeness.*
+

@@ -6,10 +6,10 @@ This document outlines the recommended workflow when using S.I.R.E.N in a forens
 
 ## 1. Acquisition Phase
 
-Run S.I.R.E.N and select the desired mode:
+Run S.I.R.E.N and select the appropriate mode:
 
-- Local memory acquisition
-- Remote streaming (recommended for large dumps)
+- `/dev/mem` → partial and controlled extraction
+- `/proc/kcore` → full memory acquisition
 
 Example:
 
@@ -23,7 +23,7 @@ After acquisition, verify data integrity:
 
     sha256sum -c dump_filename.sha256
 
-This ensures the dump was not corrupted during extraction or transfer.
+This ensures the dump was not corrupted during extraction.
 
 ---
 
@@ -31,7 +31,7 @@ This ensures the dump was not corrupted during extraction or transfer.
 
 Use the generated strings file:
 
-    grep -Ei "pass|user|config" mem_strings.txt
+    grep -Ei "pass|user|config" mem_dump.txt
 
 This helps identify:
 
@@ -55,12 +55,12 @@ This allows identification of:
 
 ---
 
-## 5. Remote Analysis
+## 5. Analysis Environment
 
-If using streaming:
+For large dumps:
 
-- Validate hash on receiver side
-- Analyze dump on isolated forensic workstation
+- Transfer files to a dedicated forensic workstation
+- Avoid analyzing directly on the target system
 
 ---
 
@@ -74,4 +74,4 @@ Based on findings:
 
 ---
 
-*This workflow is designed for rapid triage and incident response scenarios.*
+*This workflow is designed for controlled acquisition and rapid forensic triage.*
