@@ -133,7 +133,7 @@ cd S.I.R.E.N
 # 3. Grant execution permissions
 chmod +x src/siren.sh
 
-# 4. Run with root privileges (Required for memory access)
+# 4. Run with root privileges
 sudo ./src/siren.sh
 ```
 
