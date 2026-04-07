@@ -189,14 +189,14 @@ This method allows access to the system’s physical memory representation even 
 
 ## ● Documentation
 
-- [**Acquisition Model**](./docs/ACQUISITION_MODEL.md) - Technical details on memory mapping.
-- [**Forensic Workflow**](./docs/FORENSIC_WORKFLOW.md) - Step-by-step guide for investigators.
-- [**Safety Model**](./docs/SAFETY_MODEL.md) - Kernel-level safety and restriction handling.
+[![Docs-Acquisition](https://img.shields.io/badge/Acquisition--Model-00599C?style=flat-square&logo=linux&logoColor=white)](./docs/ACQUISITION_MODEL.md) 
+[![Docs-Workflow](https://img.shields.io/badge/Forensic--Workflow-444444?style=flat-square&logo=gnu-bash&logoColor=white)](./docs/FORENSIC_WORKFLOW.md) 
+[![Docs-Safety](https://img.shields.io/badge/Safety--Model-CC0000?style=flat-square&logo=opensourceinitiative&logoColor=white)](./docs/SAFETY_MODEL.md)
 
 ---
 
 ## ● License
 
-[![License-MIT](https://img.shields.io/badge/License-MIT-EE0000?style=flat-square)](./LICENSE)
+[![License-MIT](https://img.shields.io/badge/License-MIT-EE0000?style=flat-square&logo=license&logoColor=white)](LICENSE)
 
 *This project is licensed under the MIT License.*
