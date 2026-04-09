@@ -40,6 +40,8 @@ The acquisition logic follows a structured and non-destructive path:
 2. **Controlled Extraction:** Uses /dev/mem for limited acquisition and /proc/kcore for full memory dumps  
 3. **Post-Processing:** Generates SHA256 hashes, extracts strings, and produces forensic reports  
 
+- **Note:** S.I.R.E.N requires root privileges and execution may be subject to kernel security policies (e.g., Lockdown or STRICT_DEVMEM).
+
 ---
 
 ## ● Example Output
@@ -91,6 +93,24 @@ S.I.R.E.N is designed for forensic stability:
 
 ---
 
+## ● Execution
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/jeffersoncesarantunes/S.I.R.E.N.git
+
+# 2. Enter the directory
+cd S.I.R.E.N
+
+# 3. Grant execution permissions
+chmod +x src/siren.sh
+
+# 4. Run with root privileges
+sudo ./src/siren.sh
+```
+
+---
+
 ## ● Investigation Workflow
 
 ### 1. Integrity Verification
@@ -125,24 +145,6 @@ column -s, -t < dumps/manifest.csv
 
 - Linux OS with root privileges
 - Bash 4.x+
-
----
-
-## ● Execution
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/jeffersoncesarantunes/S.I.R.E.N.git
-
-# 2. Enter the directory
-cd S.I.R.E.N
-
-# 3. Grant execution permissions
-chmod +x src/siren.sh
-
-# 4. Run with root privileges
-sudo ./src/siren.sh
-```
 
 ---
 
