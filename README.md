@@ -193,6 +193,7 @@ This method allows access to the system’s physical memory representation even 
 - [x] Controlled memory acquisition
 - [x] Full memory extraction via kcore
 - [x] JSON forensic reports
+- [x] CSV manifest logging
 
 ---
 
