@@ -1,4 +1,4 @@
-## ● Safety Model
+# ● Safety Model
 
 This document defines the operational safety principles of S.I.R.E.N.
 

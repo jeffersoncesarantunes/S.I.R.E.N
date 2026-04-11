@@ -1,4 +1,4 @@
-## ● Acquisition Model
+# ● Acquisition Model
 
 This document describes the internal logic used by S.I.R.E.N to safely acquire physical memory from a live Linux system.
 

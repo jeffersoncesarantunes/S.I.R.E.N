@@ -1,4 +1,4 @@
-## ● Forensic Workflow
+# ● Forensic Workflow
 
 This document outlines the recommended workflow when using S.I.R.E.N in a forensic investigation.
 
