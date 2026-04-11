@@ -152,10 +152,17 @@ column -s, -t < dumps/manifest.csv
 
 ```text
 ├── docs/
+│   ├── ACQUISITION_MODEL.md
+│   ├── FORENSIC_WORKFLOW.md
+│   └── SAFETY_MODEL.md
 ├── dumps/
 ├── Imagens/
+│   ├── siren1.png
+│   ├── siren2.png
+│   └── siren3.png
 ├── src/
 │   └── siren.sh
+├── .gitignore
 ├── LICENSE
 └── README.md
 ```
