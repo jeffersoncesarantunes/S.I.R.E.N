@@ -152,9 +152,9 @@ column -s, -t < dumps/manifest.csv
 
 ```text
 ├── docs/
-│   ├── ACQUISITION_MODEL.md
-│   ├── FORENSIC_WORKFLOW.md
-│   └── SAFETY_MODEL.md
+│   ├── acquisition_model.md
+│   ├── forensic_workflow.md
+│   └── safety_model.md
 ├── dumps/
 ├── Imagens/
 │   ├── siren1.png
