@@ -17,7 +17,7 @@ The name **S.I.R.E.N** is a recursive acronym that reflects the tool's dual natu
 
 **S**hell **I**nteractive **R**untime **E**ntity **N**otifier
 
-In forensic mythology, the **S.I.R.E.N** calls for the truth hidden within the depths. In this context, it symbolizes the systematic notification of memory states and the extraction of volatile data during system runtime.
+In a low-level forensic context, **S.I.R.E.N** targets the extraction of raw data from volatile memory layers. It symbolizes the systematic notification of memory states and the acquisition of critical evidence during system runtime.
 
 ---
 
