@@ -15,7 +15,7 @@ Linux memory acquisition and forensic triage tool.
 
 The name **S.I.R.E.N** is a recursive acronym that reflects the tool's dual nature: an alert system and a data harvester.
 
-> **S**hell **I**nteractive **R**untime **E**ntity **N**otifier
+**S**hell **I**nteractive **R**untime **E**ntity **N**otifier
 
 In forensic mythology, the Siren calls for the truth hidden within the depths. In this context, it symbolizes the systematic notification of memory states and the extraction of volatile data during system runtime.
 
