@@ -10,7 +10,28 @@ NC='\033[0m'
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 DUMPS_DIR="$(dirname "$SCRIPT_DIR")/dumps"
+LINSPEC_REPORT="$(dirname "$SCRIPT_DIR")/../LinSpec/report.json"
 mkdir -p "$DUMPS_DIR"
+
+LOADED_AUDIT=false
+AUDIT_KPTR=1
+AUDIT_PTRACE=1
+AUDIT_DMESG=1
+AUDIT_SPECTRE=1
+AUDIT_MELTDOWN=1
+
+load_linspec_audit() {
+    if [[ -f "$LINSPEC_REPORT" ]]; then
+        AUDIT_KPTR=$(grep -Po '"kptr_restrict": \K[^,]*' "$LINSPEC_REPORT")
+        AUDIT_PTRACE=$(grep -Po '"ptrace_scope": \K[^,]*' "$LINSPEC_REPORT")
+        AUDIT_DMESG=$(grep -Po '"dmesg_restrict": \K[^,]*' "$LINSPEC_REPORT")
+        AUDIT_SPECTRE=$(grep -Po '"spectre_v2": \K[^,]*' "$LINSPEC_REPORT")
+        AUDIT_MELTDOWN=$(grep -Po '"meltdown": \K[^,]*' "$LINSPEC_REPORT")
+        LOADED_AUDIT=true
+        return 0
+    fi
+    return 1
+}
 
 generate_reports() {
     local file_path=$1 method=$2 hash=$3 ts=$4
@@ -20,8 +41,8 @@ generate_reports() {
     local size=$(stat -c%s "$file_path" 2>/dev/null || echo "0")
     local json_file="$DUMPS_DIR/report_$timestamp.json"
     
-    printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  }\n}\n" \
-        "$timestamp" "$hostname" "$kernel" "$method" "$(basename "$file_path")" "$size" "$hash" > "$json_file"
+    printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"audit_aware\": %s,\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  }\n}\n" \
+        "$timestamp" "$hostname" "$kernel" "$method" "$LOADED_AUDIT" "$(basename "$file_path")" "$size" "$hash" > "$json_file"
     
     local csv_file="$DUMPS_DIR/manifest.csv"
     [[ ! -f "$csv_file" ]] && echo "timestamp,hostname,method,file,size,sha256" > "$csv_file"
@@ -42,6 +63,9 @@ check_storage() {
 
 map_system_ram() {
     echo -e "${CYAN}[+] Mapping Physical System RAM regions...${NC}"
+    if [[ "$AUDIT_KPTR" -eq 0 ]]; then
+        echo -e "${YELLOW}[!] Kernel Pointers Leaking: Sensitive addresses might be visible in mapping.${NC}"
+    fi
     grep "System RAM" /proc/iomem | while read -r line; do
         echo -e "  --> Address: ${YELLOW}${line}${NC} [VALID]"
     done
@@ -54,6 +78,10 @@ stream_analysis() {
     
     echo -e "${CYAN}[*] Starting Pipeline: $source${NC}"
     
+    if [[ "$AUDIT_PTRACE" -gt 0 && "$source" != "/proc/version" ]]; then
+        echo -e "${YELLOW}[!] Yama Ptrace active. Process memory attachment may be restricted.${NC}"
+    fi
+
     if [[ "$source" == "/dev/mem" || "$source" == "/proc/kcore" ]]; then
         [[ "$source" == "/dev/mem" ]] && check_storage
         dd if="$source" bs=1M count=100 conv=noerror,sync status=progress > "$output_file" 2>/dev/null
@@ -77,10 +105,13 @@ automated_extraction() {
     local ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     local ram_mb=$((ram_kb / 1024))
     
-    if [[ -f "/proc/kcore" ]]; then
-        echo -e "${YELLOW}[!] /proc/kcore detected (Bypass attempt). Use it? (y/N): ${NC}"
-        read -r kchoice
-        [[ "$kchoice" == "y" ]] && source="/proc/kcore"
+    if [[ "$AUDIT_KPTR" -gt 0 ]]; then
+        echo -e "${CYAN}[i] LinSpec: Kptr_restrict active. Using /proc/kcore for better symbol resolution.${NC}"
+        source="/proc/kcore"
+    fi
+
+    if [[ "$AUDIT_SPECTRE" -eq 0 || "$AUDIT_MELTDOWN" -eq 0 ]]; then
+        echo -e "${RED}[!] CPU VULNERABLE: Side-channel leaks possible during extraction.${NC}"
     fi
     
     echo -e "${YELLOW}[!] Initiating Automated Extraction via $source...${NC}"
@@ -99,8 +130,14 @@ automated_extraction() {
             dd if=/dev/mem bs=4k skip=$((start/4096)) count=$((size/4096)) conv=noerror,sync status=none >> "$output_file"
         done
     else
-        echo -e "${CYAN}[*] Limited to Physical RAM Size: ${ram_mb} MB${NC}"
+        echo -e "${CYAN}[*] Extraction: Physical RAM Size: ${ram_mb} MB${NC}"
         dd if=/proc/kcore bs=1M count=$ram_mb conv=noerror,sync status=progress >> "$output_file" 2>/dev/null
+    fi
+
+    echo -e "${CYAN}[*] Validating dump integrity...${NC}"
+    if od -N 4096 "$output_file" | grep -vP '^\d+' | grep -q '000000'; then
+        echo -e "${RED}[!] WARNING: Kernel is returning NULL bytes.${NC}"
+        echo -e "${YELLOW}[i] Action Required: Check CONFIG_STRICT_DEVMEM or use 'iomem=relaxed'.${NC}"
     fi
     
     if [[ -s "$output_file" ]]; then
@@ -114,7 +151,13 @@ automated_extraction() {
 
 while true; do
     clear
+    load_linspec_audit
     echo -e "\n${GREEN}🐧 S.I.R.E.N - Shell Interactive Runtime Entity Notifier${NC}"
+    if $LOADED_AUDIT; then
+        echo -e "${GREEN}[Audit Loaded from LinSpec]${NC}"
+    else
+        echo -e "${RED}[No Audit Data Found]${NC}"
+    fi
     echo -e "${CYAN}---------------------------------------------------------${NC}"
     echo "1) Map Physical Memory (iomem)"
     echo "2) Verify Extraction Pipeline"

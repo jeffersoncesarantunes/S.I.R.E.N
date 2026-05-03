@@ -26,23 +26,24 @@ In a low-level forensic context, **S.I.R.E.N** targets the extraction of raw dat
 S.I.R.E.N is a specialized forensic utility designed for controlled memory acquisition and integrity auditing.
 
 **Core Capabilities:**
-- **Low-Impact Acquisition:** Designed to minimize system interference during live memory collection
-- **Post-Acquisition Processing:** Generates SHA256 hashes and extracts strings for forensic triage
-- **Kernel Awareness:** Maps safe System RAM regions via /proc/iomem
+- **Adaptive Forensics:** Integrates with **LinSpec** to perform audit-aware acquisitions based on system hardening.
+- **Low-Impact Acquisition:** Designed to minimize system interference during live memory collection.
+- **Post-Acquisition Processing:** Generates SHA256 hashes and performs real-time integrity validation.
+- **Kernel Awareness:** Maps safe System RAM regions via `/proc/iomem` and detects kernel protection levels.
 
 ---
 
 ## ● How It Works
 
-S.I.R.E.N interfaces with the Linux Kernel through /proc/iomem, /dev/mem, and /proc/kcore.
+S.I.R.E.N interfaces with the Linux Kernel through `/proc/iomem`, `/dev/mem`, and `/proc/kcore`. 
 
-The acquisition logic follows a structured and non-destructive path:
+The acquisition logic now follows an **Audit-Aware** path:
 
-1. **Memory Mapping:** Parses /proc/iomem to identify valid System RAM regions  
-2. **Controlled Extraction:** Uses /dev/mem for limited acquisition and /proc/kcore for full memory dumps  
-3. **Post-Processing:** Generates SHA256 hashes, extracts strings, and produces forensic reports  
-
-- **Note:** S.I.R.E.N requires root privileges and execution may be subject to kernel security policies (e.g., Lockdown or STRICT_DEVMEM).
+1. **Audit Synchronization:** Automatically detects and parses LinSpec reports (`report.json`) to adjust acquisition methods based on kernel vulnerability status (e.g., `kptr_restrict`).
+2. **Memory Mapping:** Parses `/proc/iomem` to identify valid System RAM regions and alerts if sensitive pointers are leaking.
+3. **Controlled Extraction:** Selects between `/dev/mem` or `/proc/kcore` automatically based on the audit results to ensure the highest data resolution.
+4. **Integrity Validation:** Performs real-time NULL-byte detection to verify if the kernel is providing legitimate data or restricted null-filled pages (protection bypass check).
+5. **Post-Processing:** Generates SHA256 hashes, extracts strings, and produces detailed forensic JSON/CSV reports.
 
 ---
 
@@ -173,36 +174,46 @@ column -s, -t < dumps/manifest.csv
 
 ## ● Troubleshooting: Kernel Restrictions
 
-Modern Linux systems may enforce the CONFIG_STRICT_DEVMEM kernel restriction.
+Modern Linux systems may enforce strict memory protections like `CONFIG_STRICT_DEVMEM` or `Kernel Lockdown`.
 
-When enabled:
+### ⚠️ ACTION REQUIRED: NULL Bytes Detected
+If S.I.R.E.N reports **`[!] WARNING: Kernel is returning NULL bytes`**, your dump contains no usable data because the kernel is blocking access to physical memory.
 
-- Access to /dev/mem may be restricted or denied
-- Memory extraction may return very small dumps or fail entirely
+**To resolve this and obtain a valid forensic dump:**
 
-To handle this, S.I.R.E.N provides an alternative acquisition method:
+1. **Reboot and Modify Kernel Parameters:** 
+   - Access your GRUB configuration during boot.
+   - Add **`iomem=relaxed`** to the kernel parameters line.
+   - This allows the tool to read memory ranges usually locked by the OS.
 
-- Use /proc/kcore for full memory extraction (Option 4)
+2. **Bypass System Freezing:**
+   - If the system hangs during extraction, use **Option 3 (Ignore)** in the S.I.R.E.N menu. 
+   - This bypasses restricted hardware regions that cause the system to freeze when accessed directly.
 
-This method allows access to the system’s physical memory representation even when /dev/mem is restricted.
+3. **Method Fallback:**
+   - Always check the S.I.R.E.N header for `[Audit Loaded]`. If `/dev/mem` is failing, ensure LinSpec has been executed to allow S.I.R.E.N to attempt a fallback to `/proc/kcore`.
 
 ---
 
 ## ● Tech Stack
 
-- Language: Bash
-- Data Source: /dev/mem, /proc/iomem, /proc/kcore
-- Core Utilities: dd, sha256sum, strings
+- **Language:** Bash 4.x+
+- **Data Source:** `/dev/mem`, `/proc/iomem`, `/proc/kcore`
+- **Integration:** **LinSpec** (Audit-Aware JSON parsing)
+- **Core Utilities:** `dd`, `sha256sum`, `strings`, `grep`, `od`
 
 ---
 
 ## ● Roadmap
 
-- [x] Safe-range extraction
-- [x] Controlled memory acquisition
-- [x] Full memory extraction via kcore
-- [x] JSON forensic reports
-- [x] CSV manifest logging
+- [x] Safe-range extraction logic
+- [x] Controlled memory acquisition pipeline
+- [x] Full memory extraction via `kcore`
+- [x] JSON forensic reports with metadata
+- [x] CSV manifest logging for evidence tracking
+- [x] **LinSpec Symbiosis (Adaptive Forensic Logic)**
+- [x] **Real-time Integrity NULL-check validation**
+- [ ] K-Scanner Integration (Post-acquisition automated analysis)
 
 ---
 
