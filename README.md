@@ -1,6 +1,6 @@
 # 🐧 S.I.R.E.N
 
-Linux memory acquisition and forensic triage tool.
+Linux memory acquisition tool with audit-aware forensic triage.
 
 [![Platform-Linux](https://img.shields.io/badge/Platform-Linux-1793D1?style=flat-square&logo=linux&logoColor=white)](https://kernel.org)
 [![Language-Bash](https://img.shields.io/badge/Language-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
@@ -11,45 +11,37 @@ Linux memory acquisition and forensic triage tool.
 
 ---
 
-## ● Etymology & Origin
-
-The name **S.I.R.E.N** is a recursive acronym that reflects the tool's dual nature: an alert system and a data harvester.
-
-**S**hell **I**nteractive **R**untime **E**ntity **N**otifier
-
-In a low-level forensic context, **S.I.R.E.N** targets the extraction of raw data from volatile memory layers. It symbolizes the systematic notification of memory states and the acquisition of critical evidence during system runtime.
-
----
-
 ## ● Overview
 
-S.I.R.E.N is a specialized forensic utility designed for controlled memory acquisition and integrity auditing.
+S.I.R.E.N is a specialized forensic utility designed for controlled memory acquisition and integrity validation on Linux systems.
+
+It integrates with **LinSpec** to perform **audit-aware acquisitions**, adapting its extraction strategy based on detected kernel hardening levels and runtime protections.
 
 **Core Capabilities:**
-- **Adaptive Forensics:** Integrates with **LinSpec** to perform audit-aware acquisitions based on system hardening.
-- **Low-Impact Acquisition:** Designed to minimize system interference during live memory collection.
-- **Post-Acquisition Processing:** Generates SHA256 hashes and performs real-time integrity validation.
-- **Kernel Awareness:** Maps safe System RAM regions via `/proc/iomem` and detects kernel protection levels.
+
+* **Audit-Aware Acquisition:** Uses LinSpec reports (`report.json`) to guide extraction strategy
+* **Safe Memory Mapping:** Identifies valid System RAM regions via `/proc/iomem`
+* **Adaptive Source Selection:** Automatically switches between `/dev/mem` and `/proc/kcore`
+* **Integrity Validation:** Detects restricted or null-filled memory regions
+* **Forensic Artifacts:** Generates SHA256 hashes, strings, and structured reports
 
 ---
 
-## ● How It Works
+## ● Features
 
-S.I.R.E.N interfaces with the Linux Kernel through `/proc/iomem`, `/dev/mem`, and `/proc/kcore`. 
-
-The acquisition logic now follows an **Audit-Aware** path:
-
-1. **Audit Synchronization:** Automatically detects and parses LinSpec reports (`report.json`) to adjust acquisition methods based on kernel vulnerability status (e.g., `kptr_restrict`).
-2. **Memory Mapping:** Parses `/proc/iomem` to identify valid System RAM regions and alerts if sensitive pointers are leaking.
-3. **Controlled Extraction:** Selects between `/dev/mem` or `/proc/kcore` automatically based on the audit results to ensure the highest data resolution.
-4. **Integrity Validation:** Performs real-time NULL-byte detection to verify if the kernel is providing legitimate data or restricted null-filled pages (protection bypass check).
-5. **Post-Processing:** Generates SHA256 hashes, extracts strings, and produces detailed forensic JSON/CSV reports.
+* SHA256 integrity verification
+* Automatic JSON forensic reports
+* CSV manifest logging
+* On-demand string extraction
+* Pre-acquisition disk space validation
+* Safe-range mapping via `/proc/iomem`
+* Support for `/dev/mem` and `/proc/kcore`
 
 ---
 
 ## ● Example Output
 
-```bash
+```bash id="sirx1a"
 # SIREN Output: Mapping System RAM
 [+] Mapping Physical System RAM regions...
 
@@ -59,46 +51,27 @@ The acquisition logic now follows an **Audit-Aware** path:
 
 ---
 
-## ● Project in Action
+## ● How It Works
 
-![Memory Mapping](./Imagens/siren1.png)  
-*1 - Detection of safe System RAM regions using /proc/iomem.*
+S.I.R.E.N interfaces with:
 
-![Pipeline Validation](./Imagens/siren2.png)  
-*2 - Pipeline validation using controlled data extraction and report generation.*
+* `/proc/iomem`
+* `/dev/mem`
+* `/proc/kcore`
 
-![Full Memory Extraction](./Imagens/siren3.png)  
-*3 - Full memory acquisition using /proc/kcore with integrity verification.*
+Acquisition flow:
 
----
-
-## ● Features
-
-- SHA256 integrity verification
-- Automatic JSON forensic reports
-- CSV manifest logging
-- On-demand string extraction
-- Pre-acquisition disk space validation
-- Safe-range mapping via /proc/iomem
-- Support for /dev/mem and /proc/kcore
-
----
-
-## ● Operational Integrity
-
-S.I.R.E.N is designed for forensic stability:
-
-- Read-only interaction with memory interfaces  
-- No kernel modification  
-- Minimal system interference  
-- Structured evidence generation  
-- Graceful failure on restricted access  
+1. Load LinSpec audit data (`report.json`)
+2. Map valid System RAM regions via `/proc/iomem`
+3. Select acquisition source (`/dev/mem` or `/proc/kcore`)
+4. Validate memory integrity (NULL-byte detection)
+5. Generate forensic artifacts (hashes, strings, reports)
 
 ---
 
 ## ● Execution
 
-```bash
+```bash id="sirrun1"
 # 1. Clone the repository
 git clone https://github.com/jeffersoncesarantunes/S.I.R.E.N.git
 
@@ -114,31 +87,73 @@ sudo ./src/siren.sh
 
 ---
 
-## ● Investigation Workflow
+## ● Investigation & Post-Acquisition Workflow
 
 ### 1. Integrity Verification
 
-```bash
+```bash id="sirval1"
 sha256sum -c dumps/*.bin.sha256
 ```
 
-### 2. Optional String Extraction (On-Demand)
+### 2. Manual String Analysis (Optional)
 
-```bash
+```bash id="sirval2"
 strings dumps/*.bin | grep -Ei "pass|token|config|secret" | grep -v "/usr/" | head -n 50
 ```
 
 ### 3. Hexadecimal Inspection
 
-```bash
+```bash id="sirval3"
 hexdump -C dumps/*.bin | head -n 20
 ```
 
-#### 4. Audit Log Inspection
+### 4. Manifest Inspection
 
-```bash
+```bash id="sirval4"
 column -s, -t < dumps/manifest.csv
 ```
+
+### Generated Artifacts
+
+Each acquisition produces:
+
+* Raw memory dump (`.bin`)
+* SHA256 checksum (`.sha256`)
+* Extracted strings
+* CSV manifest log
+
+---
+
+## ● Why
+
+Memory acquisition on Linux is constrained by kernel protections and inconsistent interfaces.
+
+S.I.R.E.N standardizes this process by combining audit-aware acquisition, adaptive extraction methods, and built-in integrity validation.
+
+---
+
+## ● Project in Action
+
+![Memory Mapping](./Imagens/siren1.png)
+*1 - Detection of valid System RAM regions via `/proc/iomem`.*
+
+![Pipeline Validation](./Imagens/siren2.png)
+*2 - Controlled extraction and validation pipeline.*
+
+![Full Memory Extraction](./Imagens/siren3.png)
+*3 - Full acquisition using `/proc/kcore` with integrity verification.*
+
+---
+
+## ● Operational Integrity
+
+S.I.R.E.N is designed for safe live-response environments:
+
+* Read-only interaction with memory interfaces
+* No kernel modification
+* Minimal system interference
+* Automatic evidence integrity validation
+* Graceful failure on restricted access
 
 ---
 
@@ -146,14 +161,63 @@ column -s, -t < dumps/manifest.csv
 
 ### Requirements
 
-- Linux OS with root privileges
-- Bash 4.x+
+* Linux OS with root privileges
+* Bash 4.x+
+
+---
+
+## ● Troubleshooting
+
+### ⚠️ NULL Bytes Detected
+
+**Problem:**
+Kernel returns null-filled memory regions
+
+**Cause:**
+Kernel protections (e.g., `CONFIG_STRICT_DEVMEM`, Lockdown mode)
+
+**Solution:**
+
+* Add `iomem=relaxed` to kernel boot parameters
+* Reboot system
+
+---
+
+### ⚠️ System Freeze During Extraction
+
+**Cause:**
+Access to restricted hardware memory regions
+
+**Solution:**
+
+* Use fallback/ignore mode during acquisition
+* Skip unstable regions
+
+---
+
+### ⚠️ No Valid Data from `/dev/mem`
+
+**Cause:**
+Restricted kernel access
+
+**Solution:**
+
+* Ensure LinSpec audit is available
+* Allow fallback to `/proc/kcore`
+
+---
+
+## ● Forensic Ecosystem
+
+LinSpec → Kernel audit & baseline
+S.I.R.E.N → Memory acquisition
+K-Scanner → Post-acquisition analysis
 
 ---
 
 ## ● Repository Structure
 
-```text
+```text id="sirstruct1"
 ├── docs/
 │   ├── acquisition_model.md
 │   ├── forensic_workflow.md
@@ -172,61 +236,44 @@ column -s, -t < dumps/manifest.csv
 
 ---
 
-## ● Troubleshooting: Kernel Restrictions
-
-Modern Linux systems may enforce strict memory protections like `CONFIG_STRICT_DEVMEM` or `Kernel Lockdown`.
-
-### ⚠️ ACTION REQUIRED: NULL Bytes Detected
-If S.I.R.E.N reports **`[!] WARNING: Kernel is returning NULL bytes`**, your dump contains no usable data because the kernel is blocking access to physical memory.
-
-**To resolve this and obtain a valid forensic dump:**
-
-1. **Reboot and Modify Kernel Parameters:** 
-   - Access your GRUB configuration during boot.
-   - Add **`iomem=relaxed`** to the kernel parameters line.
-   - This allows the tool to read memory ranges usually locked by the OS.
-
-2. **Bypass System Freezing:**
-   - If the system hangs during extraction, use **Option 3 (Ignore)** in the S.I.R.E.N menu. 
-   - This bypasses restricted hardware regions that cause the system to freeze when accessed directly.
-
-3. **Method Fallback:**
-   - Always check the S.I.R.E.N header for `[Audit Loaded]`. If `/dev/mem` is failing, ensure LinSpec has been executed to allow S.I.R.E.N to attempt a fallback to `/proc/kcore`.
-
----
-
 ## ● Tech Stack
 
-- **Language:** Bash 4.x+
-- **Data Source:** `/dev/mem`, `/proc/iomem`, `/proc/kcore`
-- **Integration:** **LinSpec** (Audit-Aware JSON parsing)
-- **Core Utilities:** `dd`, `sha256sum`, `strings`, `grep`, `od`
+* **Language:** Bash 4.x+
+* **Data Sources:** `/dev/mem`, `/proc/iomem`, `/proc/kcore`
+* **Integration:** LinSpec (audit-aware parsing)
+* **Core Utilities:** `dd`, `sha256sum`, `strings`, `grep`, `od`
 
 ---
 
 ## ● Roadmap
 
-- [x] Safe-range extraction logic
-- [x] Controlled memory acquisition pipeline
-- [x] Full memory extraction via `kcore`
-- [x] JSON forensic reports with metadata
-- [x] CSV manifest logging for evidence tracking
-- [x] **LinSpec Symbiosis (Adaptive Forensic Logic)**
-- [x] **Real-time Integrity NULL-check validation**
-- [ ] K-Scanner Integration (Post-acquisition automated analysis)
+* [x] Safe-range extraction logic
+* [x] Controlled memory acquisition pipeline
+* [x] Full memory extraction via `kcore`
+* [x] JSON forensic reports with metadata
+* [x] CSV manifest logging
+* [x] **LinSpec Integration (Adaptive Acquisition)**
+* [x] **Real-time Integrity Validation**
+* [ ] K-Scanner Integration (post-acquisition analysis)
 
 ---
 
 ## ● Documentation
 
-[![Docs-Acquisition](https://img.shields.io/badge/Acquisition--Model-00599C?style=flat-square&logo=linux&logoColor=white)](./docs/ACQUISITION_MODEL.md) 
-[![Docs-Workflow](https://img.shields.io/badge/Forensic--Workflow-444444?style=flat-square&logo=gnu-bash&logoColor=white)](./docs/FORENSIC_WORKFLOW.md) 
-[![Docs-Safety](https://img.shields.io/badge/Safety--Model-CC0000?style=flat-square&logo=opensourceinitiative&logoColor=white)](./docs/SAFETY_MODEL.md)
+[![Docs-Acquisition](https://img.shields.io/badge/Acquisition--Model-00599C?style=flat-square\&logo=linux\&logoColor=white)](./docs/ACQUISITION_MODEL.md)
+[![Docs-Workflow](https://img.shields.io/badge/Forensic--Workflow-444444?style=flat-square\&logo=gnu-bash\&logoColor=white)](./docs/FORENSIC_WORKFLOW.md)
+[![Docs-Safety](https://img.shields.io/badge/Safety--Model-CC0000?style=flat-square\&logo=opensourceinitiative\&logoColor=white)](./docs/SAFETY_MODEL.md)
+
+---
+
+## ● Etymology & Origin
+
+**S.I.R.E.N** (Shell Interactive Runtime Entity Notifier) reflects its role in identifying runtime memory states and extracting forensic evidence during live system execution.
 
 ---
 
 ## ● License
 
-[![License-MIT](https://img.shields.io/badge/License-MIT-BD93F9?style=flat-square&logo=opensourceinitiative&logoColor=white)](./LICENSE)
+[![License-MIT](https://img.shields.io/badge/License-MIT-BD93F9?style=flat-square\&logo=opensourceinitiative\&logoColor=white)](./LICENSE)
 
 *This project is licensed under the MIT License.*
