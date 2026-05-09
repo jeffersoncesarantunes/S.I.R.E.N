@@ -168,42 +168,24 @@ S.I.R.E.N is designed for safe live-response environments:
 
 ## ● Troubleshooting
 
+### ⚠️ System Freeze During Extraction (/dev/mem)
+**Problem:** The system hangs or becomes unresponsive during acquisition.
+**Cause:** Direct access to restricted hardware/reserved memory regions on modern kernels (common in Arch Linux/Fedora).
+**Solution:** 
+* When prompted by the Kernel during **Option 3**, select **'Ignore'** to bypass the restricted region. S.I.R.E.N will continue the acquisition safely.
+* Alternatively, use **Option 4 (kcore)**, which offers a more stable abstraction for live memory.
+
 ### ⚠️ NULL Bytes Detected
-
-**Problem:**
-Kernel returns null-filled memory regions
-
-**Cause:**
-Kernel protections (e.g., `CONFIG_STRICT_DEVMEM`, Lockdown mode)
-
+**Problem:** Kernel returns null-filled memory regions (00 00 00...).
+**Cause:** Kernel protections such as `CONFIG_STRICT_DEVMEM` or EFI Lockdown mode.
 **Solution:**
+* Add `iomem=relaxed` to your kernel boot parameters and reboot.
+* Ensure S.I.R.E.N is running with full `sudo` privileges.
 
-* Add `iomem=relaxed` to kernel boot parameters
-* Reboot system
-
----
-
-### ⚠️ System Freeze During Extraction
-
-**Cause:**
-Access to restricted hardware memory regions
-
+### ⚠️ No Valid Data from /dev/mem
+**Cause:** High-level kernel restriction or lack of context.
 **Solution:**
-
-* Use fallback/ignore mode during acquisition
-* Skip unstable regions
-
----
-
-### ⚠️ No Valid Data from `/dev/mem`
-
-**Cause:**
-Restricted kernel access
-
-**Solution:**
-
-* Ensure LinSpec audit is available
-* Allow fallback to `/proc/kcore`
+* Run **LinSpec** first to generate the `report.json`. S.I.R.E.N will use this audit to automatically attempt a fallback to `/proc/kcore`.
 
 ---
 
