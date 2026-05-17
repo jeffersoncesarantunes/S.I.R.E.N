@@ -9,9 +9,14 @@ NC='\033[0m'
 [[ $EUID -ne 0 ]] && echo -e "${RED}[!] Error: Elevated privileges required.${NC}" && exit 1
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-DUMPS_DIR="$(dirname "$SCRIPT_DIR")/dumps"
-LINSPEC_REPORT="$(dirname "$SCRIPT_DIR")/../LinSpec/report.json"
-mkdir -p "$DUMPS_DIR"
+BASE_DUMPS_DIR="$(dirname "$SCRIPT_DIR")/dumps"
+BIN_DIR="$BASE_DUMPS_DIR/binaries"
+REP_DIR="$BASE_DUMPS_DIR/reports"
+CHK_DIR="$BASE_DUMPS_DIR/checksums"
+
+mkdir -p "$BIN_DIR" "$REP_DIR" "$CHK_DIR"
+
+LINSPEC_REPORT="$(dirname "$SCRIPT_DIR")/../LinSpec/reports/report.json"
 
 LOADED_AUDIT=false
 AUDIT_KPTR=1
@@ -39,21 +44,21 @@ generate_reports() {
     local hostname=$(hostname)
     local kernel=$(uname -r)
     local size=$(stat -c%s "$file_path" 2>/dev/null || echo "0")
-    local json_file="$DUMPS_DIR/report_$timestamp.json"
+    local json_file="$REP_DIR/report_$timestamp.json"
     
     printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"audit_aware\": %s,\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  }\n}\n" \
         "$timestamp" "$hostname" "$kernel" "$method" "$LOADED_AUDIT" "$(basename "$file_path")" "$size" "$hash" > "$json_file"
     
-    local csv_file="$DUMPS_DIR/manifest.csv"
+    local csv_file="$REP_DIR/manifest.csv"
     [[ ! -f "$csv_file" ]] && echo "timestamp,hostname,method,file,size,sha256" > "$csv_file"
     echo "$timestamp,$hostname,$method,$(basename "$file_path"),$size,$hash" >> "$csv_file"
     
-    echo -e "${GREEN}[+] Reports generated: JSON & CSV manifest updated.${NC}"
+    echo -e "${GREEN}[+] Reports generated in $REP_DIR${NC}"
 }
 
 check_storage() {
     local ram_size=$(grep MemTotal /proc/meminfo | awk '{print $2 * 1024}')
-    local disk_free=$(df -B1 "$DUMPS_DIR" | awk 'NR==2 {print $4}')
+    local disk_free=$(df -B1 "$BASE_DUMPS_DIR" | awk 'NR==2 {print $4}')
     if [[ -n "$ram_size" && -n "$disk_free" && "$ram_size" -gt "$disk_free" ]]; then
         echo -e "${YELLOW}[!] WARNING: RAM size exceeds available disk space.${NC}"
         read -p "Proceed with acquisition? (y/N): " choice
@@ -74,10 +79,14 @@ map_system_ram() {
 stream_analysis() {
     local source=$1
     local timestamp=$(date +%Y%m%d_%H%M%S)
-    local output_file="$DUMPS_DIR/mem_dump_$timestamp.bin"
+    local output_file="$BIN_DIR/mem_dump_$timestamp.bin"
     
     echo -e "${CYAN}[*] Starting Pipeline: $source${NC}"
     
+    if [[ "$source" == "/dev/mem" ]]; then
+        echo -e "${RED}[!] ACTION REQUIRED: If prompted by the Kernel, select option 3 (Ignore) to prevent system freeze.${NC}"
+    fi
+
     if [[ "$AUDIT_PTRACE" -gt 0 && "$source" != "/proc/version" ]]; then
         echo -e "${YELLOW}[!] Yama Ptrace active. Process memory attachment may be restricted.${NC}"
     fi
@@ -90,8 +99,8 @@ stream_analysis() {
     fi
     
     local hash=$(sha256sum "$output_file" | awk '{print $1}')
-    sha256sum "$output_file" > "${output_file}.sha256"
-    strings "$output_file" > "${output_file%.bin}.txt"
+    sha256sum "$output_file" > "$CHK_DIR/mem_dump_$timestamp.bin.sha256"
+    strings "$output_file" > "$BIN_DIR/mem_dump_$timestamp.txt"
     
     generate_reports "$output_file" "Live Extraction ($source)" "$hash" "$timestamp"
     echo -e "${GREEN}[+] Pipeline completed successfully.${NC}"
@@ -100,7 +109,7 @@ stream_analysis() {
 automated_extraction() {
     check_storage
     local timestamp=$(date +%Y%m%d_%H%M%S)
-    local output_file="$DUMPS_DIR/full_scan_$timestamp.bin"
+    local output_file="$BIN_DIR/full_scan_$timestamp.bin"
     local source="/dev/mem"
     local ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     local ram_mb=$((ram_kb / 1024))
@@ -135,13 +144,15 @@ automated_extraction() {
     fi
 
     echo -e "${CYAN}[*] Validating dump integrity...${NC}"
-    if od -N 4096 "$output_file" | grep -vP '^\d+' | grep -q '000000'; then
-        echo -e "${RED}[!] WARNING: Kernel is returning NULL bytes.${NC}"
+    local dump_size=$(stat -c%s "$output_file" 2>/dev/null || echo 0)
+    if [[ "$dump_size" -lt 4096 ]]; then
+        echo -e "${RED}[!] WARNING: Dump is too small (${dump_size} bytes) - read may have failed.${NC}"
         echo -e "${YELLOW}[i] Action Required: Check CONFIG_STRICT_DEVMEM or use 'iomem=relaxed'.${NC}"
     fi
     
     if [[ -s "$output_file" ]]; then
         local hash=$(sha256sum "$output_file" | awk '{print $1}')
+        sha256sum "$output_file" > "$CHK_DIR/full_scan_$timestamp.bin.sha256"
         generate_reports "$output_file" "Automated Scan ($source)" "$hash" "$timestamp"
         echo -e "${GREEN}[+] Extraction finalized.${NC}"
     else
@@ -153,11 +164,11 @@ while true; do
     clear
     load_linspec_audit
     echo -e "\n${GREEN}🐧 S.I.R.E.N - Shell Interactive Runtime Entity Notifier${NC}"
+    
     if $LOADED_AUDIT; then
         echo -e "${GREEN}[Audit Loaded from LinSpec]${NC}"
-    else
-        echo -e "${RED}[No Audit Data Found]${NC}"
     fi
+
     echo -e "${CYAN}---------------------------------------------------------${NC}"
     echo "1) Map Physical Memory (iomem)"
     echo "2) Verify Extraction Pipeline"
