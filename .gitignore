@@ -26,6 +26,50 @@ dumps/
 *.json
 *.sha256
 
+# Environment Files (CRITICAL)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.staging
+.env.test
+
+# Secrets & Credentials
+# ------------------------------------------------------------------------------
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+*.ovpn
+secrets.yml
+secrets.yaml
+credentials.json
+service-account.json
+firebase.json
+config.php
+settings.py
+application.yml
+.npmrc
+.pypirc
+.netrc
+
+# SSH & GPG Keys
+# ------------------------------------------------------------------------------
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+authorized_keys
+known_hosts
+.ssh/
+.gnupg/
+
 # Development & OS Artifacts
 # ------------------------------------------------------------------------------
 # Linux/Arch Linux swap files
@@ -38,11 +82,44 @@ dumps/
 # macOS/Windows compatibility
 .DS_Store
 Thumbs.db
+Desktop.ini
 
-# Forensic outputs
+# History
+# ------------------------------------------------------------------------------
+.history
+.bash_history
+.zsh_history
+
+# Backup & Database
+# ------------------------------------------------------------------------------
+*.bak
+*.backup
+*.dump
+*.sql
+*.db
+*.sqlite
+*.mdb
+
+# Build Artifacts
+# ------------------------------------------------------------------------------
+build/
+dist/
+*.o
+*.a
+*.so
+
+# Cloud & Infrastructure
+# ------------------------------------------------------------------------------
+.terraform/
+terraform.tfstate
+.kube/
+.aws/
+.docker/config.json
+
+# Forensic outputs (duplicate protection)
+# ------------------------------------------------------------------------------
 dumps/
 *.bin
 *.raw
 *.txt
 *.sha256
-
