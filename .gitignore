@@ -1,125 +1,15 @@
-# ==============================================================================
-# S.I.R.E.N - Git Ignore Configuration
-# Professional Forensic Data Protection
-# ==============================================================================
-
-# Forensic Evidence & Dumps (STRICT PROTECTION)
-# ------------------------------------------------------------------------------
-# We ignore the entire dumps directory to prevent accidental exposure of 
-# volatile memory data (RAM), sensitive strings, or system hashes.
+# Ignorar binários e dumps brutos de memória
 dumps/
-!dumps/.gitkeep
-
-# Acquisition Artifacts
-# ------------------------------------------------------------------------------
-*.raw
 *.bin
 *.dmp
-*.mem
-*.img
 
-# Analysis Reports
-# ------------------------------------------------------------------------------
-*.txt
-*.log
-*.csv
+# Ignorar logs, manifestos e relatórios gerados
 *.json
-*.sha256
-
-# Environment Files (CRITICAL)
-# ------------------------------------------------------------------------------
-.env
-.env.local
-.env.*.local
-.env.production
-.env.development
-.env.staging
-.env.test
-
-# Secrets & Credentials
-# ------------------------------------------------------------------------------
-*.pem
-*.key
-*.p12
-*.pfx
-*.crt
-*.cer
-*.jks
-*.keystore
-*.ovpn
-secrets.yml
-secrets.yaml
-credentials.json
-service-account.json
-firebase.json
-config.php
-settings.py
-application.yml
-.npmrc
-.pypirc
-.netrc
-
-# SSH & GPG Keys
-# ------------------------------------------------------------------------------
-id_rsa
-id_rsa.pub
-id_ed25519
-id_ed25519.pub
-authorized_keys
-known_hosts
-.ssh/
-.gnupg/
-
-# Development & OS Artifacts
-# ------------------------------------------------------------------------------
-# Linux/Arch Linux swap files
-*.swp
-*~
-.fuse_hidden*
-.directory
-.Trash-*
-
-# macOS/Windows compatibility
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-# History
-# ------------------------------------------------------------------------------
-.history
-.bash_history
-.zsh_history
-
-# Backup & Database
-# ------------------------------------------------------------------------------
-*.bak
-*.backup
-*.dump
-*.sql
-*.db
-*.sqlite
-*.mdb
-
-# Build Artifacts
-# ------------------------------------------------------------------------------
-build/
-dist/
-*.o
-*.a
-*.so
-
-# Cloud & Infrastructure
-# ------------------------------------------------------------------------------
-.terraform/
-terraform.tfstate
-.kube/
-.aws/
-.docker/config.json
-
-# Forensic outputs (duplicate protection)
-# ------------------------------------------------------------------------------
-dumps/
-*.bin
-*.raw
+*.csv
 *.txt
-*.sha256
+!LICENSE
+!README.md
+
+# Ignorar arquivos temporários ou ocultos do sistema
+.DS_Store
+*.swp
