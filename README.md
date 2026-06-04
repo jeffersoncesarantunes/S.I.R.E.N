@@ -200,6 +200,7 @@ S.I.R.E.N is designed for safe live-response environments:
 LinSpec → Kernel audit & baseline
 S.I.R.E.N → Memory acquisition
 K-Scanner → Post-acquisition analysis
+SYNTROPY Scripts → Automated pipeline (orchestrate, bind, offline-scan)
 
 ---
 
@@ -242,7 +243,7 @@ K-Scanner → Post-acquisition analysis
 * [x] CSV manifest logging
 * [x] **LinSpec Integration (Adaptive Acquisition)**
 * [x] **Real-time Integrity Validation**
-* [ ] K-Scanner Integration (post-acquisition analysis)
+* [x] **K-Scanner Integration** (post-acquisition analysis via SYNTROPY scripts)
 
 ---
 
