@@ -112,6 +112,7 @@ automated_extraction() {
     local output_file="$BIN_DIR/full_scan_$timestamp.bin"
     local source="/dev/mem"
     local ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    [[ -z "$ram_kb" ]] && ram_kb=0
     local ram_mb=$((ram_kb / 1024))
     
     if [[ "$AUDIT_KPTR" -gt 0 ]]; then
@@ -128,7 +129,7 @@ automated_extraction() {
     
     if [[ "$source" == "/dev/mem" ]]; then
         grep "System RAM" /proc/iomem | while read -r line; do
-            range=$(echo $line | cut -d' ' -f1)
+            range=$(echo "$line" | cut -d' ' -f1)
             start_hex=$(echo $range | cut -d'-' -f1)
             end_hex=$(echo $range | cut -d'-' -f2)
             start=$((16#$start_hex))
