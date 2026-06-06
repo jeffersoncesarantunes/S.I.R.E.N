@@ -1,15 +1,33 @@
-# Ignorar binários e dumps brutos de memória
+# ─── Forensic Dumps & Artifacts ──────────────────────────────────────
 dumps/
+
+# ─── Raw Memory Dumps (extra safety beyond dumps/) ───────────────────
 *.bin
+*.raw
 *.dmp
+*.core
 
-# Ignorar logs, manifestos e relatórios gerados
-*.json
-*.csv
-*.txt
-!LICENSE
-!README.md
+# ─── Build Artifacts ─────────────────────────────────────────────────
+*.o
+*.a
+*.so
+*.out
 
-# Ignorar arquivos temporários ou ocultos do sistema
+# ─── Logs ────────────────────────────────────────────────────────────
+*.log
+
+# ─── OS Files ────────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
+
+# ─── Editor Files ────────────────────────────────────────────────────
 *.swp
+*~
+.vscode/
+.idea/
+
+# ─── Environment & Secrets ───────────────────────────────────────────
+.env
+.env.*
+*.pem
+*.key
