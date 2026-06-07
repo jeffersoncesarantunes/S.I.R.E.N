@@ -22,7 +22,6 @@ LINSPEC_REPORT="$(dirname "$SCRIPT_DIR")/../LinSpec/reports/report.json"
 LOADED_AUDIT=false
 AUDIT_KPTR=1
 AUDIT_PTRACE=1
-AUDIT_DMESG=1
 AUDIT_SPECTRE=1
 AUDIT_MELTDOWN=1
 
@@ -30,7 +29,6 @@ load_linspec_audit() {
     if [[ -f "$LINSPEC_REPORT" ]]; then
         AUDIT_KPTR=$(grep -Po '"kptr_restrict": \K[^,]*' "$LINSPEC_REPORT")
         AUDIT_PTRACE=$(grep -Po '"ptrace_scope": \K[^,]*' "$LINSPEC_REPORT")
-        AUDIT_DMESG=$(grep -Po '"dmesg_restrict": \K[^,]*' "$LINSPEC_REPORT")
         AUDIT_SPECTRE=$(grep -Po '"spectre_v2": \K[^,]*' "$LINSPEC_REPORT")
         AUDIT_MELTDOWN=$(grep -Po '"meltdown": \K[^,]*' "$LINSPEC_REPORT")
         LOADED_AUDIT=true
@@ -42,9 +40,9 @@ load_linspec_audit() {
 generate_reports() {
     local file_path=$1 method=$2 hash=$3 ts=$4
     local timestamp=${ts:-$(date +%Y%m%d_%H%M%S)}
-    local hostname=$(hostname)
-    local kernel=$(uname -r)
-    local size=$(stat -c%s "$file_path" 2>/dev/null || echo "0")
+    local hostname; hostname=$(hostname)
+    local kernel; kernel=$(uname -r)
+    local size; size=$(stat -c%s "$file_path" 2>/dev/null || echo "0")
     local json_file="$REP_DIR/report_$timestamp.json"
     
     printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"audit_aware\": %s,\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  }\n}\n" \
@@ -58,8 +56,8 @@ generate_reports() {
 }
 
 check_storage() {
-    local ram_size=$(grep MemTotal /proc/meminfo | awk '{print $2 * 1024}')
-    local disk_free=$(df -B1 "$BASE_DUMPS_DIR" | awk 'NR==2 {print $4}')
+    local ram_size; ram_size=$(grep MemTotal /proc/meminfo | awk '{print $2 * 1024}')
+    local disk_free; disk_free=$(df -B1 "$BASE_DUMPS_DIR" | awk 'NR==2 {print $4}')
     if [[ -n "$ram_size" && -n "$disk_free" && "$ram_size" -gt "$disk_free" ]]; then
         echo -e "${YELLOW}[!] WARNING: RAM size exceeds available disk space.${NC}"
         read -rp "Proceed with acquisition? (y/N): " choice
@@ -79,7 +77,7 @@ map_system_ram() {
 
 stream_analysis() {
     local source=$1
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp; timestamp=$(date +%Y%m%d_%H%M%S)
     local output_file="$BIN_DIR/mem_dump_$timestamp.bin"
     
     echo -e "${CYAN}[*] Starting Pipeline: $source${NC}"
@@ -99,7 +97,7 @@ stream_analysis() {
         cat "$source" > "$output_file"
     fi
     
-    local hash=$(sha256sum "$output_file" | awk '{print $1}')
+    local hash; hash=$(sha256sum "$output_file" | awk '{print $1}')
     sha256sum "$output_file" > "$CHK_DIR/mem_dump_$timestamp.bin.sha256"
     strings "$output_file" > "$BIN_DIR/mem_dump_$timestamp.txt"
     
@@ -109,10 +107,10 @@ stream_analysis() {
 
 automated_extraction() {
     check_storage
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp; timestamp=$(date +%Y%m%d_%H%M%S)
     local output_file="$BIN_DIR/full_scan_$timestamp.bin"
     local source="/dev/mem"
-    local ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    local ram_kb; ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     [[ -z "$ram_kb" ]] && ram_kb=0
     local ram_mb=$((ram_kb / 1024))
     
@@ -126,13 +124,13 @@ automated_extraction() {
     fi
     
     echo -e "${YELLOW}[!] Initiating Automated Extraction via $source...${NC}"
-    > "$output_file"
+    true > "$output_file"
     
     if [[ "$source" == "/dev/mem" ]]; then
         grep "System RAM" /proc/iomem | while read -r line; do
             range=$(echo "$line" | cut -d' ' -f1)
-            start_hex=$(echo $range | cut -d'-' -f1)
-            end_hex=$(echo $range | cut -d'-' -f2)
+            start_hex=$(echo "$range" | cut -d'-' -f1)
+            end_hex=$(echo "$range" | cut -d'-' -f2)
             start=$((16#$start_hex))
             end=$((16#$end_hex))
             size=$((end - start))
@@ -146,14 +144,14 @@ automated_extraction() {
     fi
 
     echo -e "${CYAN}[*] Validating dump integrity...${NC}"
-    local dump_size=$(stat -c%s "$output_file" 2>/dev/null || echo 0)
+    local dump_size; dump_size=$(stat -c%s "$output_file" 2>/dev/null || echo 0)
     if [[ "$dump_size" -lt 4096 ]]; then
         echo -e "${RED}[!] WARNING: Dump is too small (${dump_size} bytes) - read may have failed.${NC}"
         echo -e "${YELLOW}[i] Action Required: Check CONFIG_STRICT_DEVMEM or use 'iomem=relaxed'.${NC}"
     fi
     
     if [[ -s "$output_file" ]]; then
-        local hash=$(sha256sum "$output_file" | awk '{print $1}')
+        local hash; hash=$(sha256sum "$output_file" | awk '{print $1}')
         sha256sum "$output_file" > "$CHK_DIR/full_scan_$timestamp.bin.sha256"
         generate_reports "$output_file" "Automated Scan ($source)" "$hash" "$timestamp"
         echo -e "${GREEN}[+] Extraction finalized.${NC}"
