@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -61,7 +62,7 @@ check_storage() {
     local disk_free=$(df -B1 "$BASE_DUMPS_DIR" | awk 'NR==2 {print $4}')
     if [[ -n "$ram_size" && -n "$disk_free" && "$ram_size" -gt "$disk_free" ]]; then
         echo -e "${YELLOW}[!] WARNING: RAM size exceeds available disk space.${NC}"
-        read -p "Proceed with acquisition? (y/N): " choice
+        read -rp "Proceed with acquisition? (y/N): " choice
         [[ "$choice" != "y" ]] && exit 1
     fi
 }
@@ -178,7 +179,7 @@ while true; do
     echo "5) Exit"
     echo -e "${CYAN}---------------------------------------------------------${NC}"
     
-    read -p "Select an option: " opt
+    read -rp "Select an option: " opt
     case $opt in
         1) map_system_ram ;;
         2) stream_analysis "/proc/version" ;;
@@ -189,5 +190,5 @@ while true; do
     esac
     
     echo -e "\n${CYAN}-- Press ENTER to return to menu --${NC}"
-    read
+    read -r
 done
