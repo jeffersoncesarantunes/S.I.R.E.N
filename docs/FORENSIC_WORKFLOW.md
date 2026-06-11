@@ -1,15 +1,15 @@
-# ● Forensic Workflow
+# Forensic Workflow
 
-This document outlines the recommended workflow when using S.I.R.E.N in a forensic investigation.
+Here's how you'd typically use S.I.R.E.N in a real investigation. The steps are pretty straightforward.
 
 ---
 
 ## 1. Acquisition Phase
 
-Run S.I.R.E.N and select the appropriate mode:
+Fire up S.I.R.E.N and pick the mode that fits your needs:
 
-- `/dev/mem` → partial and controlled extraction
-- `/proc/kcore` → full memory acquisition
+- `/dev/mem` -- partial, controlled extraction when you just need a slice
+- `/proc/kcore` -- full memory acquisition when you want everything
 
 Example:
 
@@ -19,21 +19,21 @@ Example:
 
 ## 2. Integrity Verification
 
-After acquisition, verify data integrity:
+Once you've got your dump, check it hasn't been mangled during extraction:
 
     sha256sum -c dump_filename.sha256
 
-This ensures the dump was not corrupted during extraction.
+If the hash matches, you're good to go.
 
 ---
 
 ## 3. Artifact Extraction
 
-Use the generated strings file:
+The strings file S.I.R.E.N generates is your friend here:
 
     grep -Ei "pass|user|config" mem_dump.txt
 
-This helps identify:
+This is where you'll find things like:
 
 - Credentials
 - Configuration data
@@ -43,34 +43,31 @@ This helps identify:
 
 ## 4. Data Inspection
 
-Perform low-level inspection:
+Sometimes you need to get down to the byte level:
 
     hexdump -C mem_dump.bin | head -n 20
 
-This allows identification of:
+This lets you spot:
 
 - Memory patterns
 - Embedded structures
-- Suspicious payloads
+- Suspicious payloads that might not show up in a text search
 
 ---
 
 ## 5. Analysis Environment
 
-For large dumps:
-
-- Transfer files to a dedicated forensic workstation
-- Avoid analyzing directly on the target system
+For larger dumps, don't try to do everything on the target box. Transfer the files to a dedicated forensic workstation and work from there. Keeps things clean and safe.
 
 ---
 
 ## 6. Decision Making
 
-Based on findings:
+What you do with the findings is up to you, but the usual playbook is:
 
-- Escalate investigation
-- Isolate compromised system
-- Preserve dump as forensic evidence
+- Escalate the investigation if you find something serious
+- Isolate the compromised system
+- Preserve the dump as forensic evidence
 
 ---
 

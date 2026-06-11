@@ -1,81 +1,80 @@
-# ● Acquisition Model
+# Acquisition Model
 
-This document describes the internal logic used by S.I.R.E.N to safely acquire physical memory from a live Linux system.
+This breaks down the internals of how S.I.R.E.N actually grabs physical memory from a live Linux system. It's worth understanding if you're trying to figure out why something worked -- or why it didn't.
 
 ---
 
 ## 1. Data Sources
 
-S.I.R.E.N relies on kernel-exposed interfaces:
+S.I.R.E.N talks to three kernel interfaces. Each one serves a different purpose:
 
-- `/proc/iomem` → memory map classification
-- `/dev/mem` → partial raw physical memory access
-- `/proc/kcore` → full memory acquisition interface
+- `/proc/iomem` -- tells the tool how memory is laid out and classified
+- `/dev/mem` -- gives partial raw physical memory access when you need a controlled read
+- `/proc/kcore` -- the go-to for full memory acquisition
 
 ---
 
 ## 2. Memory Classification
 
-The tool parses `/proc/iomem` to identify memory regions labeled as:
+The tool parses `/proc/iomem` to figure out which memory regions are fair game. It looks for two categories:
 
-- System RAM (safe for acquisition)
-- Reserved / Hardware-mapped regions (unsafe)
+- System RAM -- these are safe to read
+- Reserved or Hardware-mapped regions -- these get skipped
 
-Only **System RAM** ranges are selected when using `/dev/mem`.
+When using `/dev/mem`, only **System RAM** ranges are touched. Everything else is off limits.
 
 ---
 
 ## 3. Acquisition Modes
 
-S.I.R.E.N supports two acquisition strategies:
+S.I.R.E.N gives you two strategies depending on what you're after:
 
 ### a) Controlled Extraction (`/dev/mem`)
 
-- Limited memory extraction (default capped size)
-- Used for safe testing and validation
-- May be restricted by kernel protections
+- Grabs a limited chunk of memory with a default cap on size
+- Good for safe testing and validation runs
+- Kernel protections might shut this down on modern systems
 
 ### b) Full Memory Extraction (`/proc/kcore`)
 
 - Reads memory based on total physical RAM size
-- Used when `/dev/mem` is restricted
-- Produces large-scale dumps
+- Falls back to this when `/dev/mem` won't cooperate
+- Produces large-scale dumps -- make sure you have disk space
 
 ---
 
 ## 4. Acquisition Workflow
 
-The acquisition process follows:
+The pipeline is straightforward:
 
-1. Data is read from the selected source
-2. Raw memory is written to a dump file
-3. SHA256 hash is generated
-4. Strings are extracted for analysis
-5. JSON report and CSV manifest are created
+1. Read data from whichever source was selected
+2. Write the raw memory out to a dump file
+3. Generate a SHA256 hash so you can verify it later
+4. Extract strings for quick analysis
+5. Dump a JSON report and CSV manifest for your records
 
 ---
 
 ## 5. Kernel Restrictions
 
-Modern Linux systems may enforce:
+Modern Linux kernels don't exactly hand out memory for free. The main thing that gets in the way is `CONFIG_STRICT_DEVMEM`.
 
-- `CONFIG_STRICT_DEVMEM`
+When that's enabled:
 
-When enabled:
-
-- `/dev/mem` access is limited
-- Full acquisition may require `/proc/kcore`
+- `/dev/mem` access gets heavily restricted
+- You'll probably need to switch to `/proc/kcore` for anything useful
 
 ---
 
 ## 6. Limitations
 
-- Requires root privileges
-- `/dev/mem` may be restricted
-- `/proc/kcore` output may include kernel abstractions
-- Not a replacement for dedicated forensic frameworks (e.g., LiME)
+Some things you should know before relying on this in a real case:
+
+- Root privileges are mandatory -- no way around it
+- `/dev/mem` may be locked down tight depending on the kernel config
+- `/proc/kcore` output includes kernel abstractions, not pure physical memory
+- This is not a replacement for dedicated frameworks like LiME when you need proper forensic-grade acquisition
 
 ---
 
 *This model prioritizes safety, traceability, and controlled acquisition.*
-

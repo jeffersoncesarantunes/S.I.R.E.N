@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
+trap 'echo -e "${RED}[!] Interrupted. Cleaning up...${NC}"; rm -f "$BIN_DIR"/*.bin "$BIN_DIR"/*.tmp 2>/dev/null; exit 1' INT TERM
 
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -17,7 +19,7 @@ CHK_DIR="$BASE_DUMPS_DIR/checksums"
 
 mkdir -p "$BIN_DIR" "$REP_DIR" "$CHK_DIR"
 
-LINSPEC_REPORT="$(dirname "$SCRIPT_DIR")/../LinSpec/reports/report.json"
+LINSPEC_REPORT="${LINSPEC_REPORT:-$(dirname "$SCRIPT_DIR")/../LinSpec/reports/report.json}"
 
 LOADED_AUDIT=false
 AUDIT_KPTR=1
@@ -45,8 +47,27 @@ generate_reports() {
     local size; size=$(stat -c%s "$file_path" 2>/dev/null || echo "0")
     local json_file="$REP_DIR/report_$timestamp.json"
     
-    printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"audit_aware\": %s,\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  }\n}\n" \
-        "$timestamp" "$hostname" "$kernel" "$method" "$LOADED_AUDIT" "$(basename "$file_path")" "$size" "$hash" > "$json_file"
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import json, sys
+data = {
+    'timestamp': '$timestamp',
+    'hostname': '''$hostname''',
+    'kernel': '''$kernel''',
+    'method': '''$method''',
+    'audit_aware': $LOADED_AUDIT,
+    'evidence': {
+        'file': '$(basename "$file_path")',
+        'size_bytes': $size,
+        'sha256': '''$hash'''
+    }
+}
+json.dump(data, sys.stdout, indent=2)
+" > "$json_file"
+    else
+        printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"audit_aware\": %s,\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  }\n}\n" \
+            "$timestamp" "${hostname//\"/\\\"}" "${kernel//\"/\\\"}" "$method" "$LOADED_AUDIT" "$(basename "$file_path")" "$size" "${hash//\"/\\\"}" > "$json_file"
+    fi
     
     local csv_file="$REP_DIR/manifest.csv"
     [[ ! -f "$csv_file" ]] && echo "timestamp,hostname,method,file,size,sha256" > "$csv_file"
@@ -111,8 +132,9 @@ automated_extraction() {
     local output_file="$BIN_DIR/full_scan_$timestamp.bin"
     local source="/dev/mem"
     local ram_kb; ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-    [[ -z "$ram_kb" ]] && ram_kb=0
+    [[ "$ram_kb" =~ ^[0-9]+$ ]] || ram_kb=0
     local ram_mb=$((ram_kb / 1024))
+    [[ "$ram_mb" -gt 0 && "$ram_mb" -lt 1048576 ]] || ram_mb=1024
     
     if [[ "$AUDIT_KPTR" -gt 0 ]]; then
         echo -e "${CYAN}[i] LinSpec: Kptr_restrict active. Using /proc/kcore for better symbol resolution.${NC}"
@@ -131,6 +153,8 @@ automated_extraction() {
             range=$(echo "$line" | cut -d' ' -f1)
             start_hex=$(echo "$range" | cut -d'-' -f1)
             end_hex=$(echo "$range" | cut -d'-' -f2)
+            [[ "$start_hex" =~ ^[0-9a-fA-F]+$ ]] || continue
+            [[ "$end_hex" =~ ^[0-9a-fA-F]+$ ]] || continue
             start=$((16#$start_hex))
             end=$((16#$end_hex))
             size=$((end - start))
