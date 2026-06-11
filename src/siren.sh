@@ -48,18 +48,18 @@ generate_reports() {
     local json_file="$REP_DIR/report_$timestamp.json"
     
     if command -v python3 &>/dev/null; then
-        python3 -c "
-import json, sys
+        PY_TS="$timestamp" PY_HOST="$hostname" PY_KERNEL="$kernel" PY_METHOD="$method" PY_FILE="$(basename "$file_path")" PY_SIZE="$size" PY_HASH="$hash" PY_AUDIT="$LOADED_AUDIT" python3 -c "
+import json, os, sys
 data = {
-    'timestamp': '$timestamp',
-    'hostname': '''$hostname''',
-    'kernel': '''$kernel''',
-    'method': '''$method''',
-    'audit_aware': $LOADED_AUDIT,
+    'timestamp': os.environ['PY_TS'],
+    'hostname': os.environ['PY_HOST'],
+    'kernel': os.environ['PY_KERNEL'],
+    'method': os.environ['PY_METHOD'],
+    'audit_aware': os.environ.get('PY_AUDIT', 'false') == 'true',
     'evidence': {
-        'file': '$(basename "$file_path")',
-        'size_bytes': $size,
-        'sha256': '''$hash'''
+        'file': os.environ['PY_FILE'],
+        'size_bytes': int(os.environ.get('PY_SIZE', '0')),
+        'sha256': os.environ['PY_HASH']
     }
 }
 json.dump(data, sys.stdout, indent=2)
