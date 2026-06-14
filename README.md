@@ -13,35 +13,35 @@ Linux memory acquisition tool with audit-aware forensic triage.
 
 ## Etymology & Origin
 
-**S.I.R.E.N** stands for **S**hell **I**nteractive **R**untime **E**ntity **N**otifier. The idea is pretty straightforward - it's a runtime memory acquisition tool that actively monitors, identifies, and notifies analysts about forensic entities during live system execution. Think of it like a siren going off when memory artifacts need attention.
+**S.I.R.E.N** stands for **S**hell **I**nteractive **R**untime **E**ntity **N**otifier. It's a runtime memory acquisition tool for live forensic triage on Linux systems.
 
 ---
 
 ## Overview
 
-S.I.R.E.N is a specialized forensic utility built for controlled memory acquisition and integrity validation on Linux systems.
-
-It hooks into **LinSpec** to run what we call **audit-aware acquisitions**. The extraction strategy adapts based on detected kernel hardening levels and runtime protections it finds.
+S.I.R.E.N performs **audit-aware acquisitions** by reading LinSpec's `report.json` and adapting its extraction strategy based on kernel hardening levels. It supports both interactive and headless (CLI) operation.
 
 **Core Capabilities:**
 
-* **Audit-Aware Acquisition:** Reads LinSpec reports (`report.json`) to figure out the best extraction strategy
-* **Safe Memory Mapping:** Finds valid System RAM regions by parsing `/proc/iomem`
-* **Adaptive Source Selection:** Automatically picks between `/dev/mem` and `/proc/kcore`
-* **Integrity Validation:** Catches restricted or null-filled memory regions
-* **Forensic Artifacts:** Generates SHA256 hashes, strings, and structured reports
+* **Audit-Aware Acquisition:** Reads LinSpec reports (`report.json`) to select the best extraction strategy
+* **Safe Memory Mapping:** Parses `/proc/iomem` for valid System RAM regions
+* **Adaptive Source Selection:** Prefers `/proc/kcore` with ELF-aware extraction (falls back to dd if needed)
+* **Content Validation:** Post-dump entropy sampling and size verification
+* **Forensic Artifacts:** SHA256 hashes, strings, JSON reports, CSV manifest, ELF segment metadata
 
 ---
 
 ## Features
 
+* ELF-aware `/proc/kcore` extraction via Python (PT_LOAD segments)
 * SHA256 integrity verification
-* Automatic JSON forensic reports
+* JSON forensic reports with audit parameters
 * CSV manifest logging
 * On-demand string extraction
 * Pre-acquisition disk space validation
 * Safe-range mapping via `/proc/iomem`
-* Support for `/dev/mem` and `/proc/kcore`
+* Interactive menu and non-interactive CLI (`--quick`, `--full`, `--test`)
+* Persistent operation log for chain of custody
 
 ---
 
@@ -59,36 +59,56 @@ It hooks into **LinSpec** to run what we call **audit-aware acquisitions**. The 
 
 ## How It Works
 
-S.I.R.E.N talks to three kernel interfaces:
+S.I.R.E.N talks to two kernel interfaces:
 
-* `/proc/iomem`
-* `/dev/mem`
-* `/proc/kcore`
+* `/proc/iomem` -- memory layout classification
+* `/proc/kcore` -- ELF-format kernel virtual address space
 
 Here's the acquisition flow:
 
-1. Load LinSpec audit data (`report.json`)
+1. Load LinSpec audit data (`report.json`) via Python3
 2. Walk through `/proc/iomem` to map valid System RAM regions
-3. Pick the right source (`/dev/mem` or `/proc/kcore`)
-4. Check memory integrity with NULL-byte detection
-5. Dump forensic artifacts (hashes, strings, reports)
+3. For `/proc/kcore`: parse ELF headers and extract readable PT_LOAD segments
+4. Validate dump content (non-null sample, minimum size)
+5. Generate forensic artifacts (hashes, strings, JSON, CSV, segment metadata)
+
+### Important note on /proc/kcore
+
+`/proc/kcore` exports the **kernel virtual address space** as an ELF core dump, not raw physical RAM. The extracted dump is suitable for:
+- String extraction and indicator hunting
+- SHA256 integrity verification
+- Hexdump and binary inspection
+- YARA scanning
+
+For **physical RAM acquisition** suitable for Volatility and other forensic frameworks, use dedicated tools like [LiME](https://github.com/504ensicsLabs/LiME) or [AVML](https://github.com/microsoft/avml).
 
 ---
 
 ## Execution
 
+### Interactive mode
+
 ```bash
-# 1. Clone the repository
-git clone https://github.com/jeffersoncesarantunes/S.I.R.E.N.git
-
-# 2. Enter the directory
-cd S.I.R.E.N
-
-# 3. Grant execution permissions
-chmod +x src/siren.sh
-
-# 4. Run with root privileges
 sudo ./src/siren.sh
+```
+
+### Non-interactive (CLI) mode
+
+```bash
+# Quick triage: first 100MB of /proc/kcore
+sudo ./src/siren.sh --quick
+
+# Full acquisition: ELF-aware extraction
+sudo ./src/siren.sh --full
+
+# Test acquisition pipeline
+sudo ./src/siren.sh --test
+
+# Display System RAM map
+sudo ./src/siren.sh --map
+
+# Custom output directory
+sudo ./src/siren.sh --full --output /evidence/case-001/
 ```
 
 ---
@@ -98,25 +118,31 @@ sudo ./src/siren.sh
 ### 1. Integrity Verification
 
 ```bash
-sha256sum -c dumps/*.bin.sha256
+sha256sum -c dumps/checksums/*.sha256
 ```
 
 ### 2. Manual String Analysis (Optional)
 
 ```bash
-strings dumps/*.bin | grep -Ei "pass|token|config|secret" | grep -v "/usr/" | head -n 50
+strings dumps/binaries/*.bin | grep -Ei "pass|token|config|secret" | grep -v "/usr/" | head -n 50
 ```
 
 ### 3. Hexadecimal Inspection
 
 ```bash
-hexdump -C dumps/*.bin | head -n 20
+hexdump -C dumps/binaries/*.bin | head -n 20
 ```
 
-### 4. Manifest Inspection
+### 4. Segment Metadata
 
 ```bash
-column -s, -t < dumps/manifest.csv
+cat dumps/binaries/*.meta.json
+```
+
+### 5. Manifest Inspection
+
+```bash
+column -s, -t < dumps/reports/manifest.csv
 ```
 
 ### Generated Artifacts
@@ -124,9 +150,12 @@ column -s, -t < dumps/manifest.csv
 Each run produces:
 
 * Raw memory dump (`.bin`)
+* ELF segment metadata (`.meta.json`, when using Python extraction)
 * SHA256 checksum (`.sha256`)
-* Extracted strings
+* Extracted strings (`.txt`)
+* JSON forensic report
 * CSV manifest log
+* Persistent operation log (`siren.log`)
 
 ---
 
@@ -134,7 +163,12 @@ Each run produces:
 
 Memory acquisition on Linux is a pain. Kernel protections get in the way, interfaces are inconsistent, and you never quite know what you're going to get.
 
-S.I.R.E.N tries to standardize the whole thing by combining audit-aware acquisition with adaptive extraction methods and built-in integrity validation. You point it at a box and it figures out the rest.
+S.I.R.E.N standardizes the process by combining audit-aware acquisition with adaptive extraction methods and built-in integrity validation.
+
+**What S.I.R.E.N is NOT:**
+- It is NOT a replacement for LiME, AVML, or other dedicated physical memory acquisition frameworks
+- The dumps produced are kernel virtual address space, NOT raw physical RAM
+- Not intended for court-admissible forensic acquisition without additional tooling
 
 ---
 
@@ -169,38 +203,8 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 
 * Linux OS with root privileges
 * Bash 4.x+
-
----
-
-## Troubleshooting
-
-### System Freeze During Extraction (/dev/mem)
-**Problem:** The system hangs or locks up during acquisition.
-**Cause:** Direct access to restricted hardware or reserved memory regions on modern kernels (common on Arch Linux and Fedora).
-**Solution:** 
-* When the kernel prompts during **Option 3**, pick **'Ignore'** to skip the restricted region. S.I.R.E.N will carry on safely.
-* Or just use **Option 4 (kcore)** instead - it gives you a much more stable abstraction for live memory.
-
-### NULL Bytes Detected
-**Problem:** The kernel hands back null-filled memory regions (00 00 00...).
-**Cause:** Kernel protections like `CONFIG_STRICT_DEVMEM` or EFI Lockdown mode.
-**Solution:**
-* Add `iomem=relaxed` to your kernel boot parameters and reboot.
-* Make sure S.I.R.E.N is running with full `sudo` privileges.
-
-### No Valid Data from /dev/mem
-**Cause:** Heavy kernel restriction or missing context.
-**Solution:**
-* Run **LinSpec** first to generate `report.json`. S.I.R.E.N will read that audit and automatically fall back to `/proc/kcore`.
-
----
-
-## Forensic Ecosystem
-
-LinSpec -- Kernel audit and baseline
-S.I.R.E.N -- Memory acquisition
-K-Scanner -- Post-acquisition analysis
-SYNTROPY Scripts -- Automated pipeline (orchestrate, bind, offline-scan)
+* Python 3.x (recommended; falls back gracefully)
+* `dd`, `sha256sum`, `strings`, `stat`
 
 ---
 
@@ -208,16 +212,20 @@ SYNTROPY Scripts -- Automated pipeline (orchestrate, bind, offline-scan)
 
 ```text
 ├── docs/
-│   ├── acquisition_model.md
-│   ├── forensic_workflow.md
-│   └── safety_model.md
+│   ├── ACQUISITION_MODEL.md
+│   ├── FORENSIC_WORKFLOW.md
+│   └── SAFETY_MODEL.md
 ├── dumps/
 ├── Images/
-│   ├── siren1.png
-│   ├── siren2.png
-│   └── siren3.png
+├── lib/
+│   ├── audit.sh          # LinSpec JSON parsing
+│   ├── acquisition.sh    # kcore ELF + dd acquisition
+│   ├── reporting.sh      # JSON/CSV/hash/strings
+│   └── safety.sh         # storage check, validation, logging
 ├── src/
-│   └── siren.sh
+│   └── siren.sh          # Entry point
+├── tools/
+│   └── kcore_extract.py  # Python ELF segment extractor
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -227,23 +235,26 @@ SYNTROPY Scripts -- Automated pipeline (orchestrate, bind, offline-scan)
 
 ## Tech Stack
 
-* **Language:** Bash 4.x+
-* **Data Sources:** `/dev/mem`, `/proc/iomem`, `/proc/kcore`
+* **Language:** Bash 4.x+ / Python 3.x (ELF parsing)
+* **Data Sources:** `/proc/iomem`, `/proc/kcore`
 * **Integration:** LinSpec (audit-aware parsing)
-* **Core Utilities:** `dd`, `sha256sum`, `strings`, `grep`, `od`
+* **Core Utilities:** `dd`, `sha256sum`, `strings`, `python3`
 
 ---
 
 ## Roadmap
 
 * [x] Safe-range extraction logic
-* [x] Controlled memory acquisition pipeline
-* [x] Full memory extraction via `kcore`
-* [x] JSON forensic reports with metadata
+* [x] ELF-aware /proc/kcore extraction (PT_LOAD segments)
+* [x] JSON forensic reports with audit parameters
 * [x] CSV manifest logging
-* [x] **LinSpec Integration (Adaptive Acquisition)**
-* [x] **Real-time Integrity Validation**
-* [x] **K-Scanner Integration** (post-acquisition analysis via SYNTROPY scripts)
+* [x] LinSpec Integration (Adaptive Acquisition)
+* [x] Content validation (entropy sampling, magic bytes)
+* [x] Non-interactive CLI mode (`--quick`, `--full`, `--test`)
+* [x] Persistent operation logging
+* [ ] LiME integration as optional backend
+* [ ] Automated Volatility profile matching
+* [ ] Remote acquisition over SSH tunnel
 
 ---
 

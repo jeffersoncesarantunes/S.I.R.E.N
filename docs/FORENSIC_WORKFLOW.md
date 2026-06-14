@@ -1,6 +1,6 @@
 # Forensic Workflow
 
-Here's how you'd typically use S.I.R.E.N in a real investigation. The steps are pretty straightforward.
+Here's how you'd typically use S.I.R.E.N in a real investigation.
 
 ---
 
@@ -8,12 +8,21 @@ Here's how you'd typically use S.I.R.E.N in a real investigation. The steps are 
 
 Fire up S.I.R.E.N and pick the mode that fits your needs:
 
-- `/dev/mem` -- partial, controlled extraction when you just need a slice
-- `/proc/kcore` -- full memory acquisition when you want everything
+**Quick Triage (Option 3 / `--quick`):**
+First 100MB of `/proc/kcore`. Fast, for initial assessment.
+
+**Full Acquisition (Option 4 / `--full`):**
+Complete ELF-aware extraction of `/proc/kcore`. For comprehensive analysis.
 
 Example:
 
-    sudo ./src/siren.sh
+```bash
+# Interactive
+sudo ./src/siren.sh
+
+# Headless full acquisition
+sudo ./src/siren.sh --full --output /evidence/case-001/
+```
 
 ---
 
@@ -21,31 +30,50 @@ Example:
 
 Once you've got your dump, check it hasn't been mangled during extraction:
 
-    sha256sum -c dump_filename.sha256
+```bash
+sha256sum -c dumps/checksums/*.sha256
+```
 
 If the hash matches, you're good to go.
 
 ---
 
-## 3. Artifact Extraction
+## 3. Segment Inspection
 
-The strings file S.I.R.E.N generates is your friend here:
+Check the ELF segment metadata to understand what was extracted:
 
-    grep -Ei "pass|user|config" mem_dump.txt
+```bash
+cat dumps/binaries/*.meta.json
+```
 
-This is where you'll find things like:
-
-- Credentials
-- Configuration data
-- Indicators of compromise
+This shows each segment's virtual address, file offset, and size.
 
 ---
 
-## 4. Data Inspection
+## 4. Artifact Extraction
+
+The strings file S.I.R.E.N generates is your friend here:
+
+```bash
+grep -Ei "pass|user|config|token|secret" dumps/binaries/*.txt
+```
+
+This is where you'll find:
+
+- Credentials and secrets
+- Configuration data
+- Indicators of compromise (C2 URLs, IPs, domain names)
+- Command history
+
+---
+
+## 5. Data Inspection
 
 Sometimes you need to get down to the byte level:
 
-    hexdump -C mem_dump.bin | head -n 20
+```bash
+hexdump -C dumps/binaries/*.bin | head -n 20
+```
 
 This lets you spot:
 
@@ -55,20 +83,45 @@ This lets you spot:
 
 ---
 
-## 5. Analysis Environment
+## 6. Analysis Environment
 
-For larger dumps, don't try to do everything on the target box. Transfer the files to a dedicated forensic workstation and work from there. Keeps things clean and safe.
+For larger dumps, don't try to do everything on the target box. Transfer the files to a dedicated forensic workstation and work from there.
+
+```bash
+# Copy artifacts off the target
+scp -r dumps/ analyst@workstation:/cases/incident-001/
+```
 
 ---
 
-## 6. Decision Making
+## 7. Third-Party Analysis
+
+The raw `.bin` dump can be fed into other tools:
+
+```bash
+# YARA scanning (if rules file available)
+yara -s /path/to/rules.yara dumps/binaries/*.bin
+
+# Bulk extractor for automatic indicator extraction
+bulk_extractor -o ./bulk_output/ dumps/binaries/*.bin
+```
+
+---
+
+## 8. Decision Making
 
 What you do with the findings is up to you, but the usual playbook is:
 
 - Escalate the investigation if you find something serious
 - Isolate the compromised system
+- For proper physical RAM acquisition, use LiME or AVML
 - Preserve the dump as forensic evidence
 
 ---
 
-*This workflow is designed for controlled acquisition and rapid forensic triage.*
+## Important Caveats
+
+- S.I.R.E.N dumps kernel virtual address space, NOT raw physical RAM
+- The dump is NOT compatible with Volatility or Rekall
+- For court-admissible forensic acquisition, use dedicated hardware write-blockers and validated tools
+- S.I.R.E.N is a triage tool, not a replacement for a full forensic toolkit

@@ -1,6 +1,6 @@
 # Safety Model
 
-This is the set of operational safety principles S.I.R.E.N follows. Nothing here is negotiable -- the tool is designed around these constraints.
+This is the set of operational safety principles S.I.R.E.N follows.
 
 ---
 
@@ -18,39 +18,37 @@ Everything is passive. If it can't read, it doesn't try to force its way in.
 
 ## 2. Controlled Memory Access
 
-Access goes through two kernel interfaces:
+Access goes through a single kernel interface:
 
-- `/dev/mem` -- restricted access, good for targeted reads
-- `/proc/kcore` -- alternative interface when you need broader access
+- `/proc/kcore` -- read-only ELF core dump interface
 
-When we use `/dev/mem`, only valid System RAM regions get touched. Anything unsafe is left alone.
+When `/proc/kcore` is unavailable, the tool reports the error gracefully. No alternative interface is probed without the user's knowledge.
 
 ---
 
 ## 3. System Stability
 
-Nobody wants a blue screen (or whatever the Linux equivalent is). So before we do anything:
+Nobody wants a system crash during incident response. So before acquisition:
 
-- Memory regions get validated before access
-- Disk space is checked before any acquisition starts
+- Disk space is checked and the user is warned if RAM exceeds available storage
+- Content is validated after dump (entropy sampling catches null-filled reads)
 - Kernel restrictions are respected, not circumvented
 
 ---
 
 ## 4. User Confirmation
 
-Some operations need you to explicitly say "yes, do it":
-
-- Direct memory extraction
-- Full memory acquisition
-
-This keeps you in the loop and makes sure nobody accidentally dumps a production box without meaning to.
+Full memory acquisition explicitly asks for confirmation if disk space is insufficient. Quick triage (100MB) skips the prompt since the risk is minimal.
 
 ---
 
 ## 5. Failure Handling
 
-When access gets denied, the tool doesn't fight it. It stops gracefully and moves on. No forced reads, no crashing.
+When access gets denied or a segment is unreadable:
+
+- The tool stops gracefully and reports what failed
+- No forced reads, no crashing
+- Partial results are preserved with a warning
 
 ---
 
@@ -58,9 +56,10 @@ When access gets denied, the tool doesn't fight it. It stops gracefully and move
 
 After acquisition, the tool locks everything down:
 
-- SHA256 hashing so you can verify nothing changed
-- Structured JSON reporting for the record
-- Persistent CSV logging so you have a manifest of everything that happened
+- SHA256 hashing for integrity verification
+- Structured JSON reporting with audit parameters
+- Persistent CSV manifest
+- Operation log with ISO-8601 timestamps for chain of custody
 
 ---
 

@@ -1,216 +1,196 @@
 #!/usr/bin/env bash
 set -euo pipefail
-umask 077
-trap 'echo -e "${RED}[!] Interrupted. Cleaning up...${NC}"; rm -f "$BIN_DIR"/*.bin "$BIN_DIR"/*.tmp 2>/dev/null; exit 1' INT TERM
+umask 022
 
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# ============================================================
+# S.I.R.E.N — Shell Interactive Runtime Entity Notifier
+# Audit-aware memory acquisition for Linux forensic triage.
+# ============================================================
+
+RED='\033[0;31m'; YELLOW='\033[1;33m'
+GREEN='\033[0;32m'; CYAN='\033[0;36m'; NC='\033[0m'
 
 [[ $EUID -ne 0 ]] && echo -e "${RED}[!] Error: Elevated privileges required.${NC}" && exit 1
 
-SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-BASE_DUMPS_DIR="$(dirname "$SCRIPT_DIR")/dumps"
+# --- Paths ---------------------------------------------------
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
+BASE_DUMPS_DIR="$PROJECT_ROOT/dumps"
 BIN_DIR="$BASE_DUMPS_DIR/binaries"
 REP_DIR="$BASE_DUMPS_DIR/reports"
 CHK_DIR="$BASE_DUMPS_DIR/checksums"
+LOG_FILE="$BASE_DUMPS_DIR/siren.log"
+LINSPEC_REPORT="${LINSPEC_REPORT:-$(dirname "$PROJECT_ROOT")/LinSpec/reports/report.json}"
 
 mkdir -p "$BIN_DIR" "$REP_DIR" "$CHK_DIR"
 
-LINSPEC_REPORT="${LINSPEC_REPORT:-$(dirname "$SCRIPT_DIR")/../LinSpec/reports/report.json}"
+# --- Lib sources ---------------------------------------------
+# shellcheck source=../lib/audit.sh
+source "$PROJECT_ROOT/lib/audit.sh"
+# shellcheck source=../lib/safety.sh
+source "$PROJECT_ROOT/lib/safety.sh"
+# shellcheck source=../lib/acquisition.sh
+source "$PROJECT_ROOT/lib/acquisition.sh"
+# shellcheck source=../lib/reporting.sh
+source "$PROJECT_ROOT/lib/reporting.sh"
 
+# --- State ---------------------------------------------------
 LOADED_AUDIT=false
-AUDIT_KPTR=1
-AUDIT_PTRACE=1
-AUDIT_SPECTRE=1
-AUDIT_MELTDOWN=1
+AUDIT_KPTR=1; AUDIT_PTRACE=1; AUDIT_SPECTRE=1
+AUDIT_MELTDOWN=1; AUDIT_DEVMEM=1
+INTERACTIVE=true
+OUTPUT_DIR=""
 
-load_linspec_audit() {
-    if [[ -f "$LINSPEC_REPORT" ]]; then
-        AUDIT_KPTR=$(grep -Po '"kptr_restrict": \K[^,]*' "$LINSPEC_REPORT")
-        AUDIT_PTRACE=$(grep -Po '"ptrace_scope": \K[^,]*' "$LINSPEC_REPORT")
-        AUDIT_SPECTRE=$(grep -Po '"spectre_v2": \K[^,]*' "$LINSPEC_REPORT")
-        AUDIT_MELTDOWN=$(grep -Po '"meltdown": \K[^,]*' "$LINSPEC_REPORT")
-        LOADED_AUDIT=true
-        return 0
-    fi
-    return 1
+# ------------------------------------------------------------
+# CLI
+# ------------------------------------------------------------
+usage() {
+    cat <<EOF
+Usage: sudo ./src/siren.sh [OPTION]
+
+Options:
+  --quick        Quick triage dump (first 100MB via /proc/kcore)
+  --full         Full acquisition (ELF-aware /proc/kcore extraction)
+  --test         Test acquisition pipeline
+  --map          Display System RAM regions from /proc/iomem
+  --output DIR   Custom output directory (default: ./dumps/)
+  --help         Show this help
+
+Without options, starts the interactive menu.
+EOF
+    exit 0
 }
 
-generate_reports() {
-    local file_path=$1 method=$2 hash=$3 ts=$4
-    local timestamp=${ts:-$(date +%Y%m%d_%H%M%S)}
-    local hostname; hostname=$(hostname)
-    local kernel; kernel=$(uname -r)
-    local size; size=$(stat -c%s "$file_path" 2>/dev/null || echo "0")
-    local json_file="$REP_DIR/report_$timestamp.json"
-    
-    if command -v python3 &>/dev/null; then
-        PY_TS="$timestamp" PY_HOST="$hostname" PY_KERNEL="$kernel" PY_METHOD="$method" PY_FILE="$(basename "$file_path")" PY_SIZE="$size" PY_HASH="$hash" PY_AUDIT="$LOADED_AUDIT" python3 -c "
-import json, os, sys
-data = {
-    'timestamp': os.environ['PY_TS'],
-    'hostname': os.environ['PY_HOST'],
-    'kernel': os.environ['PY_KERNEL'],
-    'method': os.environ['PY_METHOD'],
-    'audit_aware': os.environ.get('PY_AUDIT', 'false') == 'true',
-    'evidence': {
-        'file': os.environ['PY_FILE'],
-        'size_bytes': int(os.environ.get('PY_SIZE', '0')),
-        'sha256': os.environ['PY_HASH']
-    }
-}
-json.dump(data, sys.stdout, indent=2)
-" > "$json_file"
-    else
-        printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"audit_aware\": %s,\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  }\n}\n" \
-            "$timestamp" "${hostname//\"/\\\"}" "${kernel//\"/\\\"}" "$method" "$LOADED_AUDIT" "$(basename "$file_path")" "$size" "${hash//\"/\\\"}" > "$json_file"
-    fi
-    
-    local csv_file="$REP_DIR/manifest.csv"
-    [[ ! -f "$csv_file" ]] && echo "timestamp,hostname,method,file,size,sha256" > "$csv_file"
-    echo "$timestamp,$hostname,$method,$(basename "$file_path"),$size,$hash" >> "$csv_file"
-    
-    echo -e "${GREEN}[+] Reports generated in $REP_DIR${NC}"
-}
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --quick) INTERACTIVE=false; MODE="quick"; shift ;;
+        --full)  INTERACTIVE=false; MODE="full"; shift ;;
+        --test)  INTERACTIVE=false; MODE="test"; shift ;;
+        --map)   INTERACTIVE=false; MODE="map"; shift ;;
+        --output) shift; OUTPUT_DIR="$1"; shift ;;
+        --help)  usage ;;
+        *) echo -e "${RED}[!] Unknown option: $1${NC}"; usage ;;
+    esac
+done
 
-check_storage() {
-    local ram_size; ram_size=$(grep MemTotal /proc/meminfo | awk '{print $2 * 1024}')
-    local disk_free; disk_free=$(df -B1 "$BASE_DUMPS_DIR" | awk 'NR==2 {print $4}')
-    if [[ -n "$ram_size" && -n "$disk_free" && "$ram_size" -gt "$disk_free" ]]; then
-        echo -e "${YELLOW}[!] WARNING: RAM size exceeds available disk space.${NC}"
-        read -rp "Proceed with acquisition? (y/N): " choice
-        [[ "$choice" != "y" ]] && exit 1
-    fi
-}
+if [[ -n "$OUTPUT_DIR" ]]; then
+    mkdir -p "$OUTPUT_DIR"
+    BIN_DIR="$OUTPUT_DIR"
+    REP_DIR="$OUTPUT_DIR/reports"
+    CHK_DIR="$OUTPUT_DIR/checksums"
+    mkdir -p "$REP_DIR" "$CHK_DIR"
+    LOG_FILE="$OUTPUT_DIR/siren.log"
+fi
 
-map_system_ram() {
-    echo -e "${CYAN}[+] Mapping Physical System RAM regions...${NC}"
-    if [[ "$AUDIT_KPTR" -eq 0 ]]; then
-        echo -e "${YELLOW}[!] Kernel Pointers Leaking: Sensitive addresses might be visible in mapping.${NC}"
-    fi
-    grep "System RAM" /proc/iomem | while read -r line; do
-        echo -e "  --> Address: ${YELLOW}${line}${NC} [VALID]"
-    done
-}
-
-stream_analysis() {
-    local source=$1
+# ------------------------------------------------------------
+# Core run function
+# ------------------------------------------------------------
+run_acquisition() {
+    local method=$1 source_desc=$2
     local timestamp; timestamp=$(date +%Y%m%d_%H%M%S)
-    local output_file="$BIN_DIR/mem_dump_$timestamp.bin"
-    
-    echo -e "${CYAN}[*] Starting Pipeline: $source${NC}"
-    
-    if [[ "$source" == "/dev/mem" ]]; then
-        echo -e "${RED}[!] ACTION REQUIRED: If prompted by the Kernel, select option 3 (Ignore) to prevent system freeze.${NC}"
+    local output_file="$BIN_DIR/${method}_${timestamp}.bin"
+
+    log_operation "Starting $method acquisition ($source_desc)"
+
+    case "$method" in
+        quick)
+            quick_triage_kcore "$output_file"
+            ;;
+        full)
+            full_acquisition_kcore "$output_file"
+            ;;
+        test)
+            test_pipeline "$output_file"
+            ;;
+        *)
+            echo -e "${RED}[!] Unknown method: $method${NC}"
+            return 1
+            ;;
+    esac
+
+    log_operation "Acquisition complete: $output_file"
+
+    if [[ ! -s "$output_file" ]]; then
+        echo -e "${RED}[!] Acquisition produced empty output${NC}"
+        log_operation "FAILED: empty output"
+        return 1
     fi
 
-    if [[ "$AUDIT_PTRACE" -gt 0 && "$source" != "/proc/version" ]]; then
-        echo -e "${YELLOW}[!] Yama Ptrace active. Process memory attachment may be restricted.${NC}"
+    echo -e "${CYAN}[*] Validating dump content...${NC}"
+    validate_dump_content "$output_file" || log_operation "WARNING: content validation failed"
+
+    local hash
+    hash=$(compute_hashes "$output_file" "$CHK_DIR" "${method}_${timestamp}.bin")
+    echo -e "${GREEN}[+] SHA256: $hash${NC}"
+
+    local strings_file="$BIN_DIR/${method}_${timestamp}.txt"
+    extract_strings "$output_file" "$strings_file"
+
+    generate_reports "$output_file" "$source_desc" "$hash" "$timestamp"
+
+    if [[ -f "${output_file}.meta.json" ]]; then
+        echo -e "${GREEN}[+] Segment metadata: ${output_file}.meta.json${NC}"
     fi
 
-    if [[ "$source" == "/dev/mem" || "$source" == "/proc/kcore" ]]; then
-        [[ "$source" == "/dev/mem" ]] && check_storage
-        dd if="$source" bs=1M count=100 conv=noerror,sync status=progress > "$output_file" 2>/dev/null
-    else
-        cat "$source" > "$output_file"
-    fi
-    
-    local hash; hash=$(sha256sum "$output_file" | awk '{print $1}')
-    sha256sum "$output_file" > "$CHK_DIR/mem_dump_$timestamp.bin.sha256"
-    strings "$output_file" > "$BIN_DIR/mem_dump_$timestamp.txt"
-    
-    generate_reports "$output_file" "Live Extraction ($source)" "$hash" "$timestamp"
-    echo -e "${GREEN}[+] Pipeline completed successfully.${NC}"
+    log_operation "Completed $method acquisition"
 }
 
-automated_extraction() {
-    check_storage
-    local timestamp; timestamp=$(date +%Y%m%d_%H%M%S)
-    local output_file="$BIN_DIR/full_scan_$timestamp.bin"
-    local source="/dev/mem"
-    local ram_kb; ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-    [[ "$ram_kb" =~ ^[0-9]+$ ]] || ram_kb=0
-    local ram_mb=$((ram_kb / 1024))
-    [[ "$ram_mb" -gt 0 && "$ram_mb" -lt 1048576 ]] || ram_mb=1024
-    
-    if [[ "$AUDIT_KPTR" -gt 0 ]]; then
-        echo -e "${CYAN}[i] LinSpec: Kptr_restrict active. Using /proc/kcore for better symbol resolution.${NC}"
-        source="/proc/kcore"
-    fi
+# ------------------------------------------------------------
+# Non-interactive mode
+# ------------------------------------------------------------
+if ! $INTERACTIVE; then
+    load_linspec_audit || true
+    print_audit_status
 
-    if [[ "$AUDIT_SPECTRE" -eq 0 || "$AUDIT_MELTDOWN" -eq 0 ]]; then
-        echo -e "${RED}[!] CPU VULNERABLE: Side-channel leaks possible during extraction.${NC}"
-    fi
-    
-    echo -e "${YELLOW}[!] Initiating Automated Extraction via $source...${NC}"
-    true > "$output_file"
-    
-    if [[ "$source" == "/dev/mem" ]]; then
-        grep "System RAM" /proc/iomem | while read -r line; do
-            range=$(echo "$line" | cut -d' ' -f1)
-            start_hex=$(echo "$range" | cut -d'-' -f1)
-            end_hex=$(echo "$range" | cut -d'-' -f2)
-            [[ "$start_hex" =~ ^[0-9a-fA-F]+$ ]] || continue
-            [[ "$end_hex" =~ ^[0-9a-fA-F]+$ ]] || continue
-            start=$((16#$start_hex))
-            end=$((16#$end_hex))
-            size=$((end - start))
-            
-            echo -e "${CYAN}[i] Extracting range: $range ($((size/1024/1024)) MB)${NC}"
-            dd if=/dev/mem bs=4k skip=$((start/4096)) count=$((size/4096)) conv=noerror,sync status=none >> "$output_file"
-        done
-    else
-        echo -e "${CYAN}[*] Extraction: Physical RAM Size: ${ram_mb} MB${NC}"
-        dd if=/proc/kcore bs=1M count=$ram_mb conv=noerror,sync status=progress >> "$output_file" 2>/dev/null
-    fi
+    case "$MODE" in
+        map)
+            map_system_ram
+            ;;
+        test)
+            run_acquisition test "/proc/cpuinfo"
+            ;;
+        quick)
+            run_acquisition quick "/proc/kcore (quick triage)"
+            ;;
+        full)
+            run_acquisition full "/proc/kcore (ELF extraction)"
+            ;;
+    esac
+    exit 0
+fi
 
-    echo -e "${CYAN}[*] Validating dump integrity...${NC}"
-    local dump_size; dump_size=$(stat -c%s "$output_file" 2>/dev/null || echo 0)
-    if [[ "$dump_size" -lt 4096 ]]; then
-        echo -e "${RED}[!] WARNING: Dump is too small (${dump_size} bytes) - read may have failed.${NC}"
-        echo -e "${YELLOW}[i] Action Required: Check CONFIG_STRICT_DEVMEM or use 'iomem=relaxed'.${NC}"
-    fi
-    
-    if [[ -s "$output_file" ]]; then
-        local hash; hash=$(sha256sum "$output_file" | awk '{print $1}')
-        sha256sum "$output_file" > "$CHK_DIR/full_scan_$timestamp.bin.sha256"
-        generate_reports "$output_file" "Automated Scan ($source)" "$hash" "$timestamp"
-        echo -e "${GREEN}[+] Extraction finalized.${NC}"
-    else
-        echo -e "${RED}[!] Error: Extraction failed.${NC}"
-    fi
-}
+# ------------------------------------------------------------
+# Interactive menu
+# ------------------------------------------------------------
+trap 'echo -e "${RED}[!] Interrupted.${NC}"; exit 1' INT TERM
 
 while true; do
     clear
-    load_linspec_audit
-    echo -e "\n${GREEN}🐧 S.I.R.E.N - Shell Interactive Runtime Entity Notifier${NC}"
-    
-    if $LOADED_AUDIT; then
-        echo -e "${GREEN}[Audit Loaded from LinSpec]${NC}"
-    fi
+    load_linspec_audit || true
 
+    echo -e "\n${GREEN}S.I.R.E.N - Shell Interactive Runtime Entity Notifier${NC}"
+    print_audit_status
     echo -e "${CYAN}---------------------------------------------------------${NC}"
-    echo "1) Map Physical Memory (iomem)"
-    echo "2) Verify Extraction Pipeline"
-    echo "3) Live Memory Extraction (/dev/mem)"
-    echo "4) Advanced Forensic Bypass (kcore)"
+    echo "1) Map Physical RAM (iomem)"
+    echo "2) Test Acquisition Pipeline"
+    echo "3) Quick Triage Dump (100MB via /proc/kcore)"
+    echo "4) Full Memory Acquisition (/proc/kcore ELF)"
     echo "5) Exit"
     echo -e "${CYAN}---------------------------------------------------------${NC}"
-    
+
     read -rp "Select an option: " opt
     case $opt in
         1) map_system_ram ;;
-        2) stream_analysis "/proc/version" ;;
-        3) stream_analysis "/dev/mem" ;;
-        4) automated_extraction ;;
-        5) exit 0 ;;
+        2) run_acquisition test "/proc/cpuinfo" ;;
+        3) check_storage; run_acquisition quick "/proc/kcore (quick triage)" ;;
+        4) check_storage; run_acquisition full "/proc/kcore (ELF extraction)" ;;
+        5)
+            log_operation "Session ended"
+            exit 0
+            ;;
         *) sleep 1 ;;
     esac
-    
+
     echo -e "\n${CYAN}-- Press ENTER to return to menu --${NC}"
     read -r
 done

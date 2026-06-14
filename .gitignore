@@ -1,20 +1,25 @@
+# S.I.R.E.N - forensic artifacts
 dumps/
 *.bin
 *.raw
 *.dmp
 *.core
+
+# Build / temp
 *.o
 *.a
 *.so
 *.out
 *.log
-.DS_Store
-Thumbs.db
 *.swp
 *~
+__pycache__/
+*.pyc
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# IDE
 .vscode/
 .idea/
-.env
-.env.*
-*.pem
-*.key
