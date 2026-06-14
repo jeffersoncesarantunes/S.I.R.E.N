@@ -20,7 +20,7 @@ generate_reports() {
         PY_AUDIT_KPTR="$AUDIT_KPTR" PY_AUDIT_PTRACE="$AUDIT_PTRACE" \
         PY_AUDIT_SPECTRE="$AUDIT_SPECTRE" PY_AUDIT_MELTDOWN="$AUDIT_MELTDOWN" \
         python3 -c "
-import json, os
+import json, os, sys
 data = {
     'timestamp': os.environ['PY_TS'],
     'hostname': os.environ['PY_HOST'],

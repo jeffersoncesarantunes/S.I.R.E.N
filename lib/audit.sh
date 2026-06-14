@@ -47,7 +47,6 @@ except Exception:
 print_audit_status() {
     if $LOADED_AUDIT; then
         echo -e "${GREEN}[Audit Loaded from LinSpec]${NC}"
-        echo -e "  kptr_restrict=${AUDIT_KPTR}  ptrace_scope=${AUDIT_PTRACE}  spectre_v2=${AUDIT_SPECTRE}  meltdown=${AUDIT_MELTDOWN}  devmem_restrict=${AUDIT_DEVMEM}"
     else
         echo -e "${YELLOW}[i] No LinSpec audit loaded (defaulting to safe params)${NC}"
     fi

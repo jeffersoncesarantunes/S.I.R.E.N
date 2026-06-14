@@ -99,8 +99,8 @@ run_acquisition() {
         full)
             full_acquisition_kcore "$output_file"
             ;;
-        test)
-            test_pipeline "$output_file"
+        verify)
+            verify_pipeline "$output_file"
             ;;
         *)
             echo -e "${RED}[!] Unknown method: $method${NC}"
@@ -147,7 +147,7 @@ if ! $INTERACTIVE; then
             map_system_ram
             ;;
         test)
-            run_acquisition test "/proc/cpuinfo"
+            run_acquisition verify "/proc/version"
             ;;
         quick)
             run_acquisition quick "/proc/kcore (quick triage)"
@@ -168,21 +168,21 @@ while true; do
     clear
     load_linspec_audit || true
 
-    echo -e "\n${GREEN}S.I.R.E.N - Shell Interactive Runtime Entity Notifier${NC}"
+    echo -e "\n${GREEN}🐧 S.I.R.E.N - Shell Interactive Runtime Entity Notifier${NC}"
     print_audit_status
     echo -e "${CYAN}---------------------------------------------------------${NC}"
-    echo "1) Map Physical RAM (iomem)"
-    echo "2) Test Acquisition Pipeline"
-    echo "3) Quick Triage Dump (100MB via /proc/kcore)"
-    echo "4) Full Memory Acquisition (/proc/kcore ELF)"
+    echo "1) Map Physical Memory (iomem)"
+    echo "2) Verify Extraction Pipeline"
+    echo "3) Live Memory Extraction (/dev/mem)"
+    echo "4) Advanced Forensic Bypass (kcore)"
     echo "5) Exit"
     echo -e "${CYAN}---------------------------------------------------------${NC}"
 
     read -rp "Select an option: " opt
     case $opt in
         1) map_system_ram ;;
-        2) run_acquisition test "/proc/cpuinfo" ;;
-        3) check_storage; run_acquisition quick "/proc/kcore (quick triage)" ;;
+        2) run_acquisition verify "/proc/version" ;;
+        3) check_storage; echo -e "${YELLOW}[!] /dev/mem is restricted on modern kernels. Using /proc/kcore instead.${NC}"; run_acquisition quick "/proc/kcore (quick triage)" ;;
         4) check_storage; run_acquisition full "/proc/kcore (ELF extraction)" ;;
         5)
             log_operation "Session ended"
