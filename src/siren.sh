@@ -20,7 +20,14 @@ BIN_DIR="$BASE_DUMPS_DIR/binaries"
 REP_DIR="$BASE_DUMPS_DIR/reports"
 CHK_DIR="$BASE_DUMPS_DIR/checksums"
 LOG_FILE="$BASE_DUMPS_DIR/siren.log"
-LINSPEC_REPORT="${LINSPEC_REPORT:-$(dirname "$PROJECT_ROOT")/LinSpec/reports/report.json}"
+if [[ -n "${LINSPEC_REPORT:-}" ]]; then
+    if [[ "$LINSPEC_REPORT" != *"/"* ]]; then
+        echo -e "${YELLOW}[!] LINSPEC_REPORT must be an absolute path, ignoring${NC}"
+        LINSPEC_REPORT="$(dirname "$PROJECT_ROOT")/LinSpec/reports/report.json"
+    fi
+else
+    LINSPEC_REPORT="$(dirname "$PROJECT_ROOT")/LinSpec/reports/report.json"
+fi
 
 mkdir -p "$BIN_DIR" "$REP_DIR" "$CHK_DIR"
 

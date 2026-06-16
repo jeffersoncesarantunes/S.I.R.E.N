@@ -24,9 +24,9 @@ validate_dump_content() {
     fi
 
     if command -v python3 &>/dev/null; then
-        python3 -c "
-import sys
-with open('$file_path', 'rb') as f:
+        PY_PATH="$file_path" python3 -c "
+import os, sys
+with open(os.environ['PY_PATH'], 'rb') as f:
     sample = f.read(4096)
     non_zero = sum(1 for b in sample if b != 0)
     ratio = non_zero / len(sample)

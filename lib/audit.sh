@@ -14,10 +14,10 @@ load_linspec_audit() {
 
     if command -v python3 &>/dev/null; then
         local json
-        json=$(python3 -c "
-import json, sys
+        json=$(PY_REPORT="$LINSPEC_REPORT" python3 -c "
+import os, json, sys
 try:
-    with open('$LINSPEC_REPORT') as f:
+    with open(os.environ['PY_REPORT']) as f:
         d = json.load(f)
     print(d.get('kptr_restrict', 1))
     print(d.get('ptrace_scope', 1))

@@ -13,13 +13,47 @@ dumps/
 *.log
 *.swp
 *~
-__pycache__/
-*.pyc
+
+# Secrets / credentials
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+secrets.yml
+secrets.yaml
+service-account.json
+.netrc
+id_*
+known_hosts
+.ssh/
+.gnupg/
+
+# Cloud / infra
+.terraform/
+*.tfstate
+.kube/
+kubeconfig
+.aws/
+.docker/config.json
+.gcloud/
+
+# Reports
+*.json
+*.csv
+reports/
+results/
 
 # OS metadata
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # IDE
 .vscode/
 .idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
