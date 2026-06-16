@@ -212,20 +212,20 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 
 ```text
 ├── docs/
-│   ├── ACQUISITION_MODEL.md
-│   ├── FORENSIC_WORKFLOW.md
-│   └── SAFETY_MODEL.md
-├── dumps/
-├── Images/
+│   ├── ACQUISITION_MODEL.md   Acquisition methodology
+│   ├── FORENSIC_WORKFLOW.md   Forensic workflow
+│   └── SAFETY_MODEL.md        Safety and integrity model
+├── dumps/                     Extracted artifacts
+├── Images/                    Screenshots
 ├── lib/
-│   ├── audit.sh          # LinSpec JSON parsing
-│   ├── acquisition.sh    # kcore ELF + dd acquisition
-│   ├── reporting.sh      # JSON/CSV/hash/strings
-│   └── safety.sh         # storage check, validation, logging
+│   ├── audit.sh               LinSpec JSON parsing
+│   ├── acquisition.sh         kcore ELF + dd acquisition
+│   ├── reporting.sh           JSON/CSV/hash/strings
+│   └── safety.sh              Storage check, validation, logging
 ├── src/
-│   └── siren.sh          # Entry point
+│   └── siren.sh               Entry point
 ├── tools/
-│   └── kcore_extract.py  # Python ELF segment extractor
+│   └── kcore_extract.py       Python ELF segment extractor
 ├── .gitignore
 ├── LICENSE
 └── README.md
