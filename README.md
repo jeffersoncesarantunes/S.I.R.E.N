@@ -2,6 +2,7 @@
 
 Linux memory acquisition tool with audit-aware forensic triage.
 
+
 [![Platform-Linux](https://img.shields.io/badge/Platform-Linux-1793D1?style=flat-square&logo=linux&logoColor=white)](https://kernel.org)
 [![Language-Bash](https://img.shields.io/badge/Language-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
 [![License-MIT](https://img.shields.io/badge/License-MIT-EE0000?style=flat-square&logo=license&logoColor=white)](LICENSE)
@@ -9,11 +10,13 @@ Linux memory acquisition tool with audit-aware forensic triage.
 [![Tested-on](https://img.shields.io/badge/Tested%20on-Arch%20Linux-1793D1?style=flat-square&logo=arch-linux)](https://security.archlinux.org/)
 [![Domain](https://img.shields.io/badge/Domain-Digital%20Forensics-8A2BE2?style=flat-square)](./docs/SAFETY_MODEL.md)
 
+
 ---
 
 ## Etymology & Origin
 
 **S.I.R.E.N** stands for **S**hell **I**nteractive **R**untime **E**ntity **N**otifier. It's a runtime memory acquisition tool for live forensic triage on Linux systems.
+
 
 ---
 
@@ -23,15 +26,18 @@ S.I.R.E.N performs **audit-aware acquisitions** by reading LinSpec's `report.jso
 
 **Core Capabilities:**
 
+
 * **Audit-Aware Acquisition:** Reads LinSpec reports (`report.json`) to select the best extraction strategy
 * **Safe Memory Mapping:** Parses `/proc/iomem` for valid System RAM regions
 * **Adaptive Source Selection:** Prefers `/proc/kcore` with ELF-aware extraction (falls back to dd if needed)
 * **Content Validation:** Post-dump entropy sampling and size verification
 * **Forensic Artifacts:** SHA256 hashes, strings, JSON reports, CSV manifest, ELF segment metadata
 
+
 ---
 
 ## Features
+
 
 * ELF-aware `/proc/kcore` extraction via Python (PT_LOAD segments)
 * SHA256 integrity verification
@@ -42,6 +48,7 @@ S.I.R.E.N performs **audit-aware acquisitions** by reading LinSpec's `report.jso
 * Safe-range mapping via `/proc/iomem`
 * Interactive menu and non-interactive CLI (`--quick`, `--full`, `--test`)
 * Persistent operation log for chain of custody
+
 
 ---
 
@@ -55,16 +62,19 @@ S.I.R.E.N performs **audit-aware acquisitions** by reading LinSpec's `report.jso
 --> Address: 00100000-5aaeafff : System RAM [VALID]
 ```
 
+
 ---
 
 ## How It Works
 
 S.I.R.E.N talks to two kernel interfaces:
 
+
 * `/proc/iomem` -- memory layout classification
 * `/proc/kcore` -- ELF-format kernel virtual address space
 
 Here's the acquisition flow:
+
 
 1. Load LinSpec audit data (`report.json`) via Python3
 2. Walk through `/proc/iomem` to map valid System RAM regions
@@ -72,15 +82,18 @@ Here's the acquisition flow:
 4. Validate dump content (non-null sample, minimum size)
 5. Generate forensic artifacts (hashes, strings, JSON, CSV, segment metadata)
 
+
 ### Important note on /proc/kcore
 
 `/proc/kcore` exports the **kernel virtual address space** as an ELF core dump, not raw physical RAM. The extracted dump is suitable for:
-- String extraction and indicator hunting
-- SHA256 integrity verification
-- Hexdump and binary inspection
-- YARA scanning
+
+* String extraction and indicator hunting
+* SHA256 integrity verification
+* Hexdump and binary inspection
+* YARA scanning
 
 For **physical RAM acquisition** suitable for Volatility and other forensic frameworks, use dedicated tools like [LiME](https://github.com/504ensicsLabs/LiME) or [AVML](https://github.com/microsoft/avml).
+
 
 ---
 
@@ -110,6 +123,7 @@ sudo ./src/siren.sh --map
 # Custom output directory
 sudo ./src/siren.sh --full --output /evidence/case-001/
 ```
+
 
 ---
 
@@ -149,6 +163,7 @@ column -s, -t < dumps/reports/manifest.csv
 
 Each run produces:
 
+
 * Raw memory dump (`.bin`)
 * ELF segment metadata (`.meta.json`, when using Python extraction)
 * SHA256 checksum (`.sha256`)
@@ -156,6 +171,7 @@ Each run produces:
 * JSON forensic report
 * CSV manifest log
 * Persistent operation log (`siren.log`)
+
 
 ---
 
@@ -166,22 +182,28 @@ Memory acquisition on Linux is a pain. Kernel protections get in the way, interf
 S.I.R.E.N standardizes the process by combining audit-aware acquisition with adaptive extraction methods and built-in integrity validation.
 
 **What S.I.R.E.N is NOT:**
-- It is NOT a replacement for LiME, AVML, or other dedicated physical memory acquisition frameworks
-- The dumps produced are kernel virtual address space, NOT raw physical RAM
-- Not intended for court-admissible forensic acquisition without additional tooling
+
+* It is NOT a replacement for LiME, AVML, or other dedicated physical memory acquisition frameworks
+* The dumps produced are kernel virtual address space, NOT raw physical RAM
+* Not intended for court-admissible forensic acquisition without additional tooling
+
 
 ---
 
 ## Project in Action
 
 ![Memory Mapping](./Images/siren1.png)
+
 *Detection of valid System RAM regions via `/proc/iomem`.*
 
 ![Pipeline Validation](./Images/siren2.png)
+
 *Controlled extraction and validation pipeline.*
 
 ![Full Memory Extraction](./Images/siren3.png)
+
 *Full acquisition using `/proc/kcore` with integrity verification.*
+
 
 ---
 
@@ -189,11 +211,13 @@ S.I.R.E.N standardizes the process by combining audit-aware acquisition with ada
 
 S.I.R.E.N was built for live-response work where you can't afford to mess things up:
 
+
 * Read-only interaction with memory interfaces
 * No kernel modification
 * Minimal system interference
 * Automatic evidence integrity validation
 * Graceful failure on restricted access
+
 
 ---
 
@@ -201,10 +225,12 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 
 ### Requirements
 
+
 * Linux OS with root privileges
 * Bash 4.x+
 * Python 3.x (recommended; falls back gracefully)
 * `dd`, `sha256sum`, `strings`, `stat`
+
 
 ---
 
@@ -212,37 +238,49 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 
 ```text
 ├── docs/
-│   ├── ACQUISITION_MODEL.md   Acquisition methodology
-│   ├── FORENSIC_WORKFLOW.md   Forensic workflow
-│   └── SAFETY_MODEL.md        Safety and integrity model
-├── dumps/                     Extracted artifacts
-├── Images/                    Screenshots
+│   ├── ACQUISITION_MODEL.md               Acquisition methodology
+│   ├── FORENSIC_WORKFLOW.md               Forensic workflow
+│   └── SAFETY_MODEL.md                    Safety and integrity model
+
+├── dumps/                                 Extracted artifacts
+
+├── Images/                                Screenshots
+
 ├── lib/
-│   ├── audit.sh               LinSpec JSON parsing
-│   ├── acquisition.sh         kcore ELF + dd acquisition
-│   ├── reporting.sh           JSON/CSV/hash/strings
-│   └── safety.sh              Storage check, validation, logging
+│   ├── audit.sh                           LinSpec JSON parsing
+│   ├── acquisition.sh                     kcore ELF + dd acquisition
+│   ├── reporting.sh                       JSON/CSV/hash/strings
+│   └── safety.sh                          Storage check, validation, logging
+
 ├── src/
-│   └── siren.sh               Entry point
+│   └── siren.sh                           Entry point
+
 ├── tools/
-│   └── kcore_extract.py       Python ELF segment extractor
+│   └── kcore_extract.py                   Python ELF segment extractor
+
 ├── .gitignore
+
 ├── LICENSE
+
 └── README.md
 ```
+
 
 ---
 
 ## Tech Stack
+
 
 * **Language:** Bash 4.x+ / Python 3.x (ELF parsing)
 * **Data Sources:** `/proc/iomem`, `/proc/kcore`
 * **Integration:** LinSpec (audit-aware parsing)
 * **Core Utilities:** `dd`, `sha256sum`, `strings`, `python3`
 
+
 ---
 
 ## Roadmap
+
 
 * [x] Safe-range extraction logic
 * [x] ELF-aware /proc/kcore extraction (PT_LOAD segments)
@@ -256,6 +294,7 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 * [ ] Automated Volatility profile matching
 * [ ] Remote acquisition over SSH tunnel
 
+
 ---
 
 ## Documentation
@@ -263,6 +302,7 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 [![Docs-Acquisition](https://img.shields.io/badge/Acquisition--Model-00599C?style=flat-square\&logo=linux\&logoColor=white)](./docs/ACQUISITION_MODEL.md)
 [![Docs-Workflow](https://img.shields.io/badge/Forensic--Workflow-444444?style=flat-square\&logo=gnu-bash\&logoColor=white)](./docs/FORENSIC_WORKFLOW.md)
 [![Docs-Safety](https://img.shields.io/badge/Safety--Model-CC0000?style=flat-square\&logo=opensourceinitiative\&logoColor=white)](./docs/SAFETY_MODEL.md)
+
 
 ---
 
