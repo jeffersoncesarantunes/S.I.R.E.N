@@ -242,18 +242,21 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 │   ├── FORENSIC_WORKFLOW.md               Forensic workflow
 │   └── SAFETY_MODEL.md                    Safety and integrity model
 
-├── dumps/                                 Extracted artifacts
+├── dumps/                                 Extracted forensic artifacts
 
-├── Images/                                Screenshots
+├── Images/
+│   ├── siren1.png                         Memory mapping screenshot
+│   ├── siren2.png                         Pipeline validation screenshot
+│   └── siren3.png                         Full extraction screenshot
 
 ├── lib/
-│   ├── audit.sh                           LinSpec JSON parsing
 │   ├── acquisition.sh                     kcore ELF + dd acquisition
+│   ├── audit.sh                           LinSpec JSON parsing
 │   ├── reporting.sh                       JSON/CSV/hash/strings
 │   └── safety.sh                          Storage check, validation, logging
 
 ├── src/
-│   └── siren.sh                           Entry point
+│   └── siren.sh                           Entry point (interactive + CLI)
 
 ├── tools/
 │   └── kcore_extract.py                   Python ELF segment extractor
@@ -261,6 +264,8 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 ├── .gitignore
 
 ├── LICENSE
+
+├── SECURITY.md
 
 └── README.md
 ```
