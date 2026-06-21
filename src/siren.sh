@@ -42,9 +42,18 @@ source "$PROJECT_ROOT/lib/acquisition.sh"
 source "$PROJECT_ROOT/lib/reporting.sh"
 
 # --- State ---------------------------------------------------
+# shellcheck disable=SC2034
 LOADED_AUDIT=false
-AUDIT_KPTR=1; AUDIT_PTRACE=1; AUDIT_SPECTRE=1
-AUDIT_MELTDOWN=1; AUDIT_DEVMEM=1
+# shellcheck disable=SC2034
+AUDIT_KPTR=1
+# shellcheck disable=SC2034
+AUDIT_PTRACE=1
+# shellcheck disable=SC2034
+AUDIT_SPECTRE=1
+# shellcheck disable=SC2034
+AUDIT_MELTDOWN=1
+# shellcheck disable=SC2034
+AUDIT_DEVMEM=1
 INTERACTIVE=true
 OUTPUT_DIR=""
 
@@ -86,6 +95,7 @@ if [[ -n "$OUTPUT_DIR" ]]; then
     REP_DIR="$OUTPUT_DIR/reports"
     CHK_DIR="$OUTPUT_DIR/checksums"
     mkdir -p "$REP_DIR" "$CHK_DIR"
+    # shellcheck disable=SC2034
     LOG_FILE="$OUTPUT_DIR/siren.log"
 fi
 

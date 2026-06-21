@@ -31,10 +31,15 @@ except Exception:
         local vals
         mapfile -t vals <<< "$json"
         [[ ${#vals[@]} -ge 5 ]] || return 1
+        # shellcheck disable=SC2034
         AUDIT_KPTR=${vals[0]}
+        # shellcheck disable=SC2034
         AUDIT_PTRACE=${vals[1]}
+        # shellcheck disable=SC2034
         AUDIT_SPECTRE=${vals[2]}
+        # shellcheck disable=SC2034
         AUDIT_MELTDOWN=${vals[3]}
+        # shellcheck disable=SC2034
         AUDIT_DEVMEM=${vals[4]}
     else
         return 1
