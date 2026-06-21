@@ -237,37 +237,37 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 ## Repository Structure
 
 ```text
-+-- docs/
-|   +-- ACQUISITION_MODEL.md               Acquisition methodology
-|   +-- FORENSIC_WORKFLOW.md               Forensic workflow
-|   \-- SAFETY_MODEL.md                    Safety and integrity model
+├── docs/
+│   ├── ACQUISITION_MODEL.md
+│   ├── FORENSIC_WORKFLOW.md
+│   └── SAFETY_MODEL.md
 
-+-- dumps/                                 Extracted forensic artifacts
+├── dumps/
 
-+-- Images/
-|   +-- siren1.png                         Memory mapping screenshot
-|   +-- siren2.png                         Pipeline validation screenshot
-|   \-- siren3.png                         Full extraction screenshot
+├── Images/
+│   ├── siren1.png
+│   ├── siren2.png
+│   └── siren3.png
 
-+-- lib/
-|   +-- acquisition.sh                     kcore ELF + dd acquisition
-|   +-- audit.sh                           LinSpec JSON parsing
-|   +-- reporting.sh                       JSON/CSV/hash/strings
-|   \-- safety.sh                          Storage check, validation, logging
+├── lib/
+│   ├── acquisition.sh
+│   ├── audit.sh
+│   ├── reporting.sh
+│   └── safety.sh
 
-+-- src/
-|   \-- siren.sh                           Entry point (interactive + CLI)
+├── src/
+│   └── siren.sh
 
-+-- tools/
-|   \-- kcore_extract.py                   Python ELF segment extractor
+├── tools/
+│   └── kcore_extract.py
 
-+-- .gitignore
+├── .gitignore
 
-+-- LICENSE
+├── LICENSE
 
-+-- SECURITY.md
+├── SECURITY.md
 
-\-- README.md
+└── README.md
 ```
 
 
