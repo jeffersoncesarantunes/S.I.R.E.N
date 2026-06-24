@@ -6,7 +6,7 @@ Linux memory acquisition tool with audit-aware forensic triage.
 [![Platform-Linux](https://img.shields.io/badge/Platform-Linux-1793D1?style=flat-square&logo=linux&logoColor=white)](https://kernel.org)
 [![Language-Bash](https://img.shields.io/badge/Language-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
 [![License-MIT](https://img.shields.io/badge/License-MIT-EE0000?style=flat-square&logo=license&logoColor=white)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-00FF41?style=flat-square)](#-roadmap)
+[![Status](https://img.shields.io/badge/Status-Active-00A86B?style=flat-square)](#-roadmap)
 [![Tested-on](https://img.shields.io/badge/Tested%20on-Arch%20Linux-1793D1?style=flat-square&logo=arch-linux)](https://security.archlinux.org/)
 [![Domain](https://img.shields.io/badge/Domain-Digital%20Forensics-8A2BE2?style=flat-square)](./docs/SAFETY_MODEL.md)
 
@@ -313,6 +313,6 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 
 ## License
 
-[![License-MIT](https://img.shields.io/badge/License-MIT-BD93F9?style=flat-square\&logo=opensourceinitiative\&logoColor=white)](./LICENSE)
+[![License-MIT](https://img.shields.io/badge/License-MIT-E63946?style=flat-square\&logo=opensourceinitiative\&logoColor=white)](./LICENSE)
 
 *This project is licensed under the MIT License.*
