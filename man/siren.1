@@ -1,0 +1,56 @@
+.TH SIREN 1 "2026-06-27" "S.I.R.E.N" "User Commands"
+.SH NAME
+siren \- Linux memory acquisition tool with audit-aware triage
+.SH SYNOPSIS
+.B sudo ./src/siren.sh
+[\fI--quick\fR | \fI--full\fR | \fI--test\fR | \fI--map\fR]
+[\fI--output\fR \fIdir\fR]
+[\fI--help\fR]
+.SH DESCRIPTION
+S.I.R.E.N (Shell Interactive Runtime Entity Notifier) performs
+forensic memory acquisition on Linux systems. It reads
+/proc/kcore using ELF-aware extraction (via Python) or dd
+fallback, generates SHA256 checksums, extracts strings, and
+produces JSON/CSV reports with chain-of-custody metadata.
+It can optionally consume LinSpec audit reports to adapt
+acquisition parameters.
+.SH OPTIONS
+.TP
+.B \--quick
+Quick triage dump: capture first 100 MB of /proc/kcore via dd.
+.TP
+.B \--full
+Full acquisition: ELF-aware extraction of PT_LOAD segments
+from /proc/kcore (requires python3).
+.TP
+.B \--test
+Test acquisition pipeline by reading /proc/version.
+.TP
+.B \--map
+Display system RAM regions from /proc/iomem.
+.TP
+.B \--output \fIdir\fR
+Custom output directory for dumps and reports.
+.TP
+.B \--help
+Display this help message and exit.
+.SH ENVIRONMENT
+.TP
+.I LINSPEC_REPORT
+Path to a LinSpec report.json for audit-aware acquisition.
+.SH FILES
+.TP
+.I /proc/kcore
+Source for memory acquisition.
+.TP
+.I dumps/
+Output directory for binary dumps, reports, and checksums.
+.SH EXIT STATUS
+.B 0
+on success, 1 on error.
+.SH AUTHOR
+Jefferson Cesar Antunes
+.SH SEE ALSO
+.BR linspec (1),
+.BR kscanner (1),
+.BR kcore (5)

@@ -7,6 +7,7 @@ Linux memory acquisition tool with audit-aware forensic triage.
 [![Language-Bash](https://img.shields.io/badge/Language-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
 [![License-MIT](https://img.shields.io/badge/License-MIT-EE0000?style=flat-square&logo=license&logoColor=white)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active-00A86B?style=flat-square)](#-roadmap)
+[![Docker](https://img.shields.io/badge/Docker-Alpine-2496ED?style=flat-square&logo=docker)](Dockerfile)
 [![Tested-on](https://img.shields.io/badge/Tested%20on-Arch%20Linux-1793D1?style=flat-square&logo=arch-linux)](https://security.archlinux.org/)
 [![Domain](https://img.shields.io/badge/Domain-Digital%20Forensics-8A2BE2?style=flat-square)](./docs/SAFETY_MODEL.md)
 
