@@ -1,6 +1,4 @@
 # shellcheck shell=bash
-# LinSpec audit parser.
-# Reads report.json via Python3 and exports AUDIT_* variables.
 
 load_linspec_audit() {
     LOADED_AUDIT=false

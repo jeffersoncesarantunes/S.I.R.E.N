@@ -1,5 +1,4 @@
 # shellcheck shell=bash
-# Report generation: JSON, CSV, SHA256, strings
 
 generate_reports() {
     local file_path=$1 method=$2 hash=$3 ts=$4

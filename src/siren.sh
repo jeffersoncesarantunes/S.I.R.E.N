@@ -2,17 +2,11 @@
 set -euo pipefail
 umask 022
 
-# ============================================================
-# S.I.R.E.N — Shell Interactive Runtime Entity Notifier
-# Audit-aware memory acquisition for Linux forensic triage.
-# ============================================================
-
 RED='\033[0;31m'; YELLOW='\033[1;33m'
 GREEN='\033[0;32m'; CYAN='\033[0;36m'; NC='\033[0m'
 
 [[ $EUID -ne 0 ]] && echo -e "${RED}[!] Error: Elevated privileges required.${NC}" && exit 1
 
-# --- Paths ---------------------------------------------------
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
 BASE_DUMPS_DIR="$PROJECT_ROOT/dumps"
@@ -31,7 +25,6 @@ fi
 
 mkdir -p "$BIN_DIR" "$REP_DIR" "$CHK_DIR"
 
-# --- Lib sources ---------------------------------------------
 # shellcheck source=../lib/audit.sh
 source "$PROJECT_ROOT/lib/audit.sh"
 # shellcheck source=../lib/safety.sh
@@ -41,7 +34,6 @@ source "$PROJECT_ROOT/lib/acquisition.sh"
 # shellcheck source=../lib/reporting.sh
 source "$PROJECT_ROOT/lib/reporting.sh"
 
-# --- State ---------------------------------------------------
 # shellcheck disable=SC2034
 LOADED_AUDIT=false
 # shellcheck disable=SC2034
@@ -57,9 +49,6 @@ AUDIT_DEVMEM=1
 INTERACTIVE=true
 OUTPUT_DIR=""
 
-# ------------------------------------------------------------
-# CLI
-# ------------------------------------------------------------
 usage() {
     cat <<EOF
 Usage: sudo ./src/siren.sh [OPTION]
@@ -99,9 +88,6 @@ if [[ -n "$OUTPUT_DIR" ]]; then
     LOG_FILE="$OUTPUT_DIR/siren.log"
 fi
 
-# ------------------------------------------------------------
-# Core run function
-# ------------------------------------------------------------
 run_acquisition() {
     local method=$1 source_desc=$2
     local timestamp; timestamp=$(date +%Y%m%d_%H%M%S)
@@ -152,9 +138,6 @@ run_acquisition() {
     log_operation "Completed $method acquisition"
 }
 
-# ------------------------------------------------------------
-# Non-interactive mode
-# ------------------------------------------------------------
 if ! $INTERACTIVE; then
     load_linspec_audit || true
     print_audit_status
@@ -176,9 +159,6 @@ if ! $INTERACTIVE; then
     exit 0
 fi
 
-# ------------------------------------------------------------
-# Interactive menu
-# ------------------------------------------------------------
 trap 'echo -e "${RED}[!] Interrupted.${NC}"; exit 1' INT TERM
 
 while true; do

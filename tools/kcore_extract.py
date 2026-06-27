@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Extract readable PT_LOAD segments from /proc/kcore.
-
-Outputs concatenated segment data + sidecar JSON with segment metadata.
-The resulting dump is kernel virtual address space, NOT raw physical RAM.
-For proper physical acquisition use LiME (lime-forensics).
-"""
 import json, os, struct, sys
 
 ELFCLASS32 = 1

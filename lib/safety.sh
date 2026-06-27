@@ -1,5 +1,4 @@
 # shellcheck shell=bash
-# Safety utilities: storage check, content validation, logging
 
 check_storage() {
     local ram_size

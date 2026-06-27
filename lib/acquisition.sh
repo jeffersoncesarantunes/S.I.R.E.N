@@ -1,5 +1,4 @@
 # shellcheck shell=bash
-# Memory acquisition functions
 
 map_system_ram() {
     echo -e "${CYAN}[+] Mapping Physical System RAM regions...${NC}"
@@ -15,7 +14,6 @@ map_system_ram() {
     done
 }
 
-# Quick triage: grab first 100MB of kcore via dd (fast, useful for strings/hex)
 quick_triage_kcore() {
     local output_file=$1
     echo -e "${CYAN}[*] Starting Pipeline: /proc/kcore${NC}"
@@ -25,7 +23,6 @@ quick_triage_kcore() {
     echo -e "${GREEN}[+] Read ${sz} bytes${NC}"
 }
 
-# Full acquisition: use Python ELF extractor on /proc/kcore
 full_acquisition_kcore() {
     local output_file=$1
     local tool_dir
@@ -58,7 +55,6 @@ full_acquisition_kcore() {
     fi
 }
 
-# Verify pipeline: read /proc/version and validate
 verify_pipeline() {
     local output_file=$1
     echo -e "${CYAN}[*] Starting Pipeline: /proc/version${NC}"
