@@ -9,12 +9,13 @@ GREEN='\033[0;32m'; CYAN='\033[0;36m'; NC='\033[0m'
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
-BASE_DUMPS_DIR="$PROJECT_ROOT/dumps"
+BASE_DUMPS_DIR="${SIREN_DUMPS_DIR:-$PROJECT_ROOT/dumps}"
 BIN_DIR="$BASE_DUMPS_DIR/binaries"
 REP_DIR="$BASE_DUMPS_DIR/reports"
 CHK_DIR="$BASE_DUMPS_DIR/checksums"
 LOG_FILE="$BASE_DUMPS_DIR/siren.log"
-if [[ -n "${LINSPEC_REPORT:-}" ]]; then
+LINSPEC_REPORT="${LINSPEC_REPORT:-${SIREN_LINSPEC_REPORT:-}}"
+if [[ -n "$LINSPEC_REPORT" ]]; then
     if [[ "$LINSPEC_REPORT" != *"/"* ]]; then
         echo -e "${YELLOW}[!] LINSPEC_REPORT must be an absolute path, ignoring${NC}"
         LINSPEC_REPORT="$(dirname "$PROJECT_ROOT")/LinSpec/reports/report.json"
@@ -60,6 +61,11 @@ Options:
   --map          Display System RAM regions from /proc/iomem
   --output DIR   Custom output directory (default: ./dumps/)
   --help         Show this help
+
+Environment:
+  SIREN_DUMPS_DIR       Override default dumps directory (default: <project>/dumps)
+  LINSPEC_REPORT        Path to LinSpec report.json for audit awareness
+  SIREN_LINSPEC_REPORT  Alternative to LINSPEC_REPORT
 
 Without options, starts the interactive menu.
 EOF
