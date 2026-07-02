@@ -244,32 +244,23 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 │   ├── ACQUISITION_MODEL.md
 │   ├── FORENSIC_WORKFLOW.md
 │   └── SAFETY_MODEL.md
-
 ├── dumps/
-
 ├── Images/
 │   ├── siren1.png
 │   ├── siren2.png
 │   └── siren3.png
-
 ├── lib/
 │   ├── acquisition.sh
 │   ├── audit.sh
 │   ├── reporting.sh
 │   └── safety.sh
-
 ├── src/
 │   └── siren.sh
-
 ├── tools/
 │   └── kcore_extract.py
-
 ├── .gitignore
-
 ├── LICENSE
-
 ├── SECURITY.md
-
 └── README.md
 ```
 
