@@ -53,6 +53,7 @@ S.I.R.E.N performs **audit-aware acquisitions** by reading LinSpec's `report.jso
 * Interactive menu and non-interactive CLI (`--quick`, `--full`, `--lime`, `--test`)
 * Persistent operation log for chain of custody
 * Automatic fallback: LiME → kcore → dd
+* Automated Volatility profile matching (v2 and v3) with JSON report integration
 
 
 ---
@@ -238,6 +239,7 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 * Python 3.x (recommended; falls back gracefully)
 * `dd`, `sha256sum`, `strings`, `stat`, `insmod`/`rmmod`
 * LiME kernel module (`lime.ko`) compiled for your kernel (optional; auto-falls back to kcore)
+* Volatility 2 or 3 (optional; enables automated profile matching in reports)
 
   To compile LiME:
   ```bash
@@ -246,6 +248,18 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
   make
   cp lime.ko /path/to/your/tools/
   ```
+
+### Optional Tools
+
+These tools enhance forensic analysis but are **not required** — SIREN continues normally if they are absent:
+
+| Tool | Purpose | Arch Linux |
+|------|---------|-----------|
+| **Volatility 3** | Profile matching in JSON reports | `sudo pacman -S volatility` |
+| **Volatility 2** | Legacy profile matching | `yay -S volatility-git` |
+| **LiME** | Physical RAM acquisition | Compile from [source](https://github.com/504ensicsLabs/LiME) for your kernel version |
+
+If Volatility is not installed or the dump format is incompatible, the profile field in `report.json` is left empty and acquisition proceeds normally — no pipeline interruption.
 
 
 ---
@@ -287,6 +301,7 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 * **Data Sources:** `/proc/iomem`, `/proc/kcore`, `/dev/lime` (LiME)
 * **Integration:** LinSpec (audit-aware parsing), LiME (physical RAM backend)
 * **Core Utilities:** `dd`, `sha256sum`, `strings`, `python3`, `insmod`/`rmmod`
+* **Forensic Tools:** Volatility 2/3 (optional, for profile matching)
 
 
 ---
@@ -303,7 +318,7 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 * [x] Non-interactive CLI mode (`--quick`, `--full`, `--test`)
 * [x] Persistent operation logging
 * [x] LiME integration as optional backend
-* [ ] Automated Volatility profile matching
+* [x] Automated Volatility profile matching
 * [ ] Remote acquisition over SSH tunnel
 
 

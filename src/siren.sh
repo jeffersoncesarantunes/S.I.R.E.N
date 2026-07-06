@@ -34,6 +34,8 @@ source "$PROJECT_ROOT/lib/safety.sh"
 source "$PROJECT_ROOT/lib/acquisition.sh"
 # shellcheck source=../lib/reporting.sh
 source "$PROJECT_ROOT/lib/reporting.sh"
+# shellcheck source=../lib/volatility.sh
+source "$PROJECT_ROOT/lib/volatility.sh"
 
 # shellcheck disable=SC2034
 LOADED_AUDIT=false
@@ -50,6 +52,12 @@ AUDIT_DEVMEM=1
 INTERACTIVE=true
 OUTPUT_DIR=""
 LIME_MODULE="${LIME_MODULE:-}"
+# shellcheck disable=SC2034
+VOLATILITY_PROFILE=""
+# shellcheck disable=SC2034
+VOLATILITY_PLATFORM=""
+# shellcheck disable=SC2034
+VOLATILITY_MAJOR=0
 
 usage() {
     cat <<EOF
@@ -141,6 +149,9 @@ run_acquisition() {
 
     local strings_file="$BIN_DIR/${method}_${timestamp}.txt"
     extract_strings "$output_file" "$strings_file"
+
+    echo -e "${CYAN}[*] Matching Volatility profile...${NC}"
+    match_volatility_profile "$output_file" || true
 
     generate_reports "$output_file" "$source_desc" "$hash" "$timestamp"
 

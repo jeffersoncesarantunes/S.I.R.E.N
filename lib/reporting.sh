@@ -18,6 +18,9 @@ generate_reports() {
         PY_AUDIT="$LOADED_AUDIT" \
         PY_AUDIT_KPTR="$AUDIT_KPTR" PY_AUDIT_PTRACE="$AUDIT_PTRACE" \
         PY_AUDIT_SPECTRE="$AUDIT_SPECTRE" PY_AUDIT_MELTDOWN="$AUDIT_MELTDOWN" \
+        PY_VOLATILITY_PROFILE="${VOLATILITY_PROFILE:-}" \
+        PY_VOLATILITY_PLATFORM="${VOLATILITY_PLATFORM:-}" \
+        PY_VOLATILITY_MAJOR="${VOLATILITY_MAJOR:-0}" \
         python3 -c "
 import json, os, sys
 data = {
@@ -36,22 +39,28 @@ data = {
         'file': os.environ['PY_FILE'],
         'size_bytes': int(os.environ.get('PY_SIZE', '0')),
         'sha256': os.environ['PY_HASH'],
+    },
+    'volatility': {
+        'profile': os.environ.get('PY_VOLATILITY_PROFILE', ''),
+        'platform': os.environ.get('PY_VOLATILITY_PLATFORM', ''),
+        'version': int(os.environ.get('PY_VOLATILITY_MAJOR', '0')),
     }
 }
 json.dump(data, sys.stdout, indent=2)
 " > "$json_file"
     else
-        printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"audit_aware\": %s,\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  }\n}\n" \
+        printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"audit_aware\": %s,\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  },\n  \"volatility\": {\n    \"profile\": \"%s\",\n    \"platform\": \"%s\",\n    \"version\": %s\n  }\n}\n" \
             "$timestamp" "${hostname//\"/\\\"}" "${kernel//\"/\\\"}" "$method" \
-            "$LOADED_AUDIT" "$(basename "$file_path")" "$size" "${hash//\"/\\\"}" > "$json_file"
+            "$LOADED_AUDIT" "$(basename "$file_path")" "$size" "${hash//\"/\\\"}" \
+            "${VOLATILITY_PROFILE:-}" "${VOLATILITY_PLATFORM:-}" "${VOLATILITY_MAJOR:-0}" > "$json_file"
     fi
 
     local csv_file="$REP_DIR/manifest.csv"
     if [[ ! -f "$csv_file" ]]; then
-        echo "timestamp,hostname,method,file,size,sha256" > "$csv_file"
+        echo "timestamp,hostname,method,file,size,sha256,volatility_profile" > "$csv_file"
     fi
-    printf '%s,%s,%s,%s,%s,%s\n' \
-        "$timestamp" "$hostname" "$method" "$(basename "$file_path")" "$size" "$hash" >> "$csv_file"
+    printf '%s,%s,%s,%s,%s,%s,%s\n' \
+        "$timestamp" "$hostname" "$method" "$(basename "$file_path")" "$size" "$hash" "${VOLATILITY_PROFILE:-}" >> "$csv_file"
 
     echo -e "${GREEN}[+] Reports generated in $REP_DIR${NC}"
 }
