@@ -39,29 +39,38 @@ match_volatility_profile() {
         fi
         local out
         out=$(eval "$cmd") || {
-            echo -e "${YELLOW}[!] volatility imageinfo failed or timed out${NC}"
-            return 1
+            echo -e "${YELLOW}[!] volatility v2 imageinfo failed or timed out${NC}"
+            VOLATILITY_PROFILE=$(uname -r 2>/dev/null || echo "")
+            [[ -n "$VOLATILITY_PROFILE" ]] && echo -e "${YELLOW}[i] Fallback to kernel release: $VOLATILITY_PROFILE${NC}"
+            return
         }
         VOLATILITY_PROFILE=$(echo "$out" | grep "Suggested Profile(s)" | sed 's/.*: //' | head -1)
     elif [[ "$VOLATILITY_MAJOR" -eq 3 ]]; then
         local cmd
         if [[ -n "$timeout_bin" ]]; then
-            cmd="$timeout_bin 60 $VOLATILITY_BIN -f \"$dump_path\" linux.info 2>/dev/null"
+            cmd="$timeout_bin 60 $VOLATILITY_BIN -f \"$dump_path\" banners.Banners -r csv 2>/dev/null"
         else
-            cmd="$VOLATILITY_BIN -f \"$dump_path\" linux.info 2>/dev/null"
+            cmd="$VOLATILITY_BIN -f \"$dump_path\" banners.Banners -r csv 2>/dev/null"
         fi
         local out
         out=$(eval "$cmd") || {
-            echo -e "${YELLOW}[!] volatility linux.info failed${NC}"
-            return 1
+            echo -e "${YELLOW}[!] volatility v3 banners.Banners failed or timed out${NC}"
+            VOLATILITY_PROFILE=$(uname -r 2>/dev/null || echo "")
+            [[ -n "$VOLATILITY_PROFILE" ]] && echo -e "${YELLOW}[i] Fallback to kernel release: $VOLATILITY_PROFILE${NC}"
+            return
         }
-        VOLATILITY_PROFILE=$(echo "$out" | grep -i "Distro\|Profile\|Platform" | head -1 | awk -F': ' '{print $2}')
+        VOLATILITY_PROFILE=$(echo "$out" | grep "Linux version" | awk -F',' '{print $2}' | head -1)
     fi
 
     if [[ -n "$VOLATILITY_PROFILE" ]]; then
         echo -e "${GREEN}[+] Volatility profile: $VOLATILITY_PROFILE${NC}"
     else
-        echo -e "${YELLOW}[!] Could not determine Volatility profile${NC}"
-        return 1
+        VOLATILITY_PROFILE=$(uname -r 2>/dev/null || echo "")
+        if [[ -n "$VOLATILITY_PROFILE" ]]; then
+            echo -e "${YELLOW}[i] Fallback to kernel release: $VOLATILITY_PROFILE${NC}"
+        else
+            echo -e "${YELLOW}[!] Could not determine Volatility profile${NC}"
+            return 1
+        fi
     fi
 }
