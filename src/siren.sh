@@ -49,6 +49,7 @@ AUDIT_MELTDOWN=1
 AUDIT_DEVMEM=1
 INTERACTIVE=true
 OUTPUT_DIR=""
+LIME_MODULE="${LIME_MODULE:-}"
 
 usage() {
     cat <<EOF
@@ -57,6 +58,7 @@ Usage: sudo ./src/siren.sh [OPTION]
 Options:
   --quick        Quick triage dump (first 100MB via /proc/kcore)
   --full         Full acquisition (ELF-aware /proc/kcore extraction)
+  --lime         Physical RAM acquisition via LiME kernel module
   --test         Test acquisition pipeline
   --map          Display System RAM regions from /proc/iomem
   --output DIR   Custom output directory (default: ./dumps/)
@@ -66,6 +68,7 @@ Environment:
   SIREN_DUMPS_DIR       Override default dumps directory (default: <project>/dumps)
   LINSPEC_REPORT        Path to LinSpec report.json for audit awareness
   SIREN_LINSPEC_REPORT  Alternative to LINSPEC_REPORT
+  LIME_MODULE           Path to LiME kernel module (auto-searched if unset)
 
 Without options, starts the interactive menu.
 EOF
@@ -76,6 +79,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --quick) INTERACTIVE=false; MODE="quick"; shift ;;
         --full)  INTERACTIVE=false; MODE="full"; shift ;;
+        --lime)  INTERACTIVE=false; MODE="lime"; shift ;;
         --test)  INTERACTIVE=false; MODE="test"; shift ;;
         --map)   INTERACTIVE=false; MODE="map"; shift ;;
         --output) shift; OUTPUT_DIR="$1"; shift ;;
@@ -107,6 +111,9 @@ run_acquisition() {
             ;;
         full)
             full_acquisition_kcore "$output_file"
+            ;;
+        lime)
+            full_acquisition_lime "$output_file"
             ;;
         verify)
             verify_pipeline "$output_file"
@@ -161,6 +168,9 @@ if ! $INTERACTIVE; then
         full)
             run_acquisition full "/proc/kcore (ELF extraction)"
             ;;
+        lime)
+            run_acquisition lime "LiME (physical RAM)"
+            ;;
     esac
     exit 0
 fi
@@ -178,7 +188,8 @@ while true; do
     echo "2) Verify Extraction Pipeline"
     echo "3) Live Memory Extraction (/dev/mem)"
     echo "4) Advanced Forensic Bypass (kcore)"
-    echo "5) Exit"
+    echo "5) LiME Physical Memory (recommended for Volatility)"
+    echo "6) Exit"
     echo -e "${CYAN}---------------------------------------------------------${NC}"
 
     read -rp "Select an option: " opt
@@ -187,7 +198,8 @@ while true; do
         2) run_acquisition verify "/proc/version" ;;
         3) check_storage; echo -e "${YELLOW}[!] /dev/mem is restricted on modern kernels. Using /proc/kcore instead.${NC}"; run_acquisition quick "/proc/kcore (quick triage)" ;;
         4) check_storage; run_acquisition full "/proc/kcore (ELF extraction)" ;;
-        5)
+        5) check_storage; run_acquisition lime "LiME (physical RAM)" ;;
+        6)
             log_operation "Session ended"
             exit 0
             ;;

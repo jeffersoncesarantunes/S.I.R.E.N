@@ -55,6 +55,54 @@ full_acquisition_kcore() {
     fi
 }
 
+full_acquisition_lime() {
+    local output_file=$1
+    local module_path="${LIME_MODULE:-}"
+
+    if [[ -z "$module_path" ]]; then
+        local search_paths=(
+            "./lime.ko"
+            "/lib/modules/$(uname -r)/lime.ko"
+            "/opt/lime/lime.ko"
+            "/root/lime.ko"
+            "/tmp/lime.ko"
+        )
+        for p in "${search_paths[@]}"; do
+            if [[ -f "$p" ]]; then
+                module_path="$p"
+                break
+            fi
+        done
+    fi
+
+    if [[ -z "$module_path" || ! -f "$module_path" ]]; then
+        echo -e "${YELLOW}[!] LiME module not found. Falling back to full kcore extraction.${NC}"
+        full_acquisition_kcore "$output_file"
+        return $?
+    fi
+
+    echo -e "${CYAN}[*] Loading LiME kernel module: $module_path${NC}"
+
+    if lsmod | grep -q '^lime '; then
+        echo -e "${YELLOW}[!] LiME already loaded, using existing instance${NC}"
+    else
+        insmod "$module_path" "path=/dev/lime format=raw" 2>/dev/null || {
+            echo -e "${RED}[!] Failed to load LiME module. Falling back to kcore extraction.${NC}"
+            full_acquisition_kcore "$output_file"
+            return $?
+        }
+    fi
+
+    echo -e "${CYAN}[*] Acquiring physical memory via /dev/lime...${NC}"
+    dd if=/dev/lime bs=1M conv=noerror,sync status=progress > "$output_file" 2>/dev/null
+
+    rmmod lime 2>/dev/null || true
+
+    local sz
+    sz=$(stat -c%s "$output_file" 2>/dev/null || echo 0)
+    echo -e "${GREEN}[+] LiME acquisition complete: ${sz} bytes${NC}"
+}
+
 verify_pipeline() {
     local output_file=$1
     echo -e "${CYAN}[*] Starting Pipeline: /proc/version${NC}"

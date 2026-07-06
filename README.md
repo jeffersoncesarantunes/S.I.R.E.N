@@ -32,7 +32,7 @@ S.I.R.E.N performs **audit-aware acquisitions** by reading LinSpec's `report.jso
 
 * **Audit-Aware Acquisition:** Reads LinSpec reports (`report.json`) to select the best extraction strategy
 * **Safe Memory Mapping:** Parses `/proc/iomem` for valid System RAM regions
-* **Adaptive Source Selection:** Prefers `/proc/kcore` with ELF-aware extraction (falls back to dd if needed)
+* **Adaptive Source Selection:** Prefers `/proc/kcore` with ELF-aware extraction or LiME for physical RAM (falls back to dd if needed)
 * **Content Validation:** Post-dump entropy sampling and size verification
 * **Forensic Artifacts:** SHA256 hashes, strings, JSON reports, CSV manifest, ELF segment metadata
 
@@ -43,14 +43,16 @@ S.I.R.E.N performs **audit-aware acquisitions** by reading LinSpec's `report.jso
 
 
 * ELF-aware `/proc/kcore` extraction via Python (PT_LOAD segments)
+* LiME physical memory acquisition as optional backend (kernel module)
 * SHA256 integrity verification
 * JSON forensic reports with audit parameters
 * CSV manifest logging
 * On-demand string extraction
 * Pre-acquisition disk space validation
 * Safe-range mapping via `/proc/iomem`
-* Interactive menu and non-interactive CLI (`--quick`, `--full`, `--test`)
+* Interactive menu and non-interactive CLI (`--quick`, `--full`, `--lime`, `--test`)
 * Persistent operation log for chain of custody
+* Automatic fallback: LiME → kcore → dd
 
 
 ---
@@ -70,32 +72,28 @@ S.I.R.E.N performs **audit-aware acquisitions** by reading LinSpec's `report.jso
 
 ## How It Works
 
-S.I.R.E.N talks to two kernel interfaces:
+S.I.R.E.N talks to three acquisition sources:
 
 
 * `/proc/iomem` -- memory layout classification
 * `/proc/kcore` -- ELF-format kernel virtual address space
+* LiME kernel module -- physical RAM via `/dev/lime` (optional backend)
 
 Here's the acquisition flow:
 
 
 1. Load LinSpec audit data (`report.json`) via Python3
 2. Walk through `/proc/iomem` to map valid System RAM regions
-3. For `/proc/kcore`: parse ELF headers and extract readable PT_LOAD segments
+3. Select backend: LiME (if module available) → ELF-aware kcore → dd fallback
 4. Validate dump content (non-null sample, minimum size)
 5. Generate forensic artifacts (hashes, strings, JSON, CSV, segment metadata)
 
 
-### Important note on /proc/kcore
+### Acquisition sources
 
-`/proc/kcore` exports the **kernel virtual address space** as an ELF core dump, not raw physical RAM. The extracted dump is suitable for:
+**`/proc/kcore`** exports the kernel virtual address space as an ELF core dump, not raw physical RAM. Suitable for string extraction, hashing, hexdump, and YARA scanning.
 
-* String extraction and indicator hunting
-* SHA256 integrity verification
-* Hexdump and binary inspection
-* YARA scanning
-
-For **physical RAM acquisition** suitable for Volatility and other forensic frameworks, use dedicated tools like [LiME](https://github.com/504ensicsLabs/LiME) or [AVML](https://github.com/microsoft/avml).
+**LiME** (Linux Memory Extractor) captures physical RAM via a loadable kernel module, producing dumps compatible with Volatility and other forensic frameworks. SIREN uses LiME as an optional backend — if the module is found it is loaded, memory is read via `/dev/lime`, and the module is unloaded automatically. Falls back to `/proc/kcore` if LiME is unavailable.
 
 
 ---
@@ -116,6 +114,12 @@ sudo ./src/siren.sh --quick
 
 # Full acquisition: ELF-aware extraction
 sudo ./src/siren.sh --full
+
+# LiME physical RAM acquisition (auto-detects lime.ko)
+sudo ./src/siren.sh --lime
+
+# LiME with explicit module path
+sudo LIME_MODULE=/path/to/lime.ko ./src/siren.sh --lime
 
 # Test acquisition pipeline
 sudo ./src/siren.sh --test
@@ -186,8 +190,8 @@ S.I.R.E.N standardizes the process by combining audit-aware acquisition with ada
 
 **What S.I.R.E.N is NOT:**
 
-* It is NOT a replacement for LiME, AVML, or other dedicated physical memory acquisition frameworks
-* The dumps produced are kernel virtual address space, NOT raw physical RAM
+* It is NOT a replacement for dedicated incident response frameworks like Velociraptor or GRR
+* The dumps produced via kcore are kernel virtual address space, NOT raw physical RAM (use `--lime` for physical RAM)
 * Not intended for court-admissible forensic acquisition without additional tooling
 
 
@@ -232,7 +236,16 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 * Linux OS with root privileges
 * Bash 4.x+
 * Python 3.x (recommended; falls back gracefully)
-* `dd`, `sha256sum`, `strings`, `stat`
+* `dd`, `sha256sum`, `strings`, `stat`, `insmod`/`rmmod`
+* LiME kernel module (`lime.ko`) compiled for your kernel (optional; auto-falls back to kcore)
+
+  To compile LiME:
+  ```bash
+  git clone https://github.com/504ensicsLabs/LiME.git
+  cd LiME/src
+  make
+  cp lime.ko /path/to/your/tools/
+  ```
 
 
 ---
@@ -271,9 +284,9 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 
 
 * **Language:** Bash 4.x+ / Python 3.x (ELF parsing)
-* **Data Sources:** `/proc/iomem`, `/proc/kcore`
-* **Integration:** LinSpec (audit-aware parsing)
-* **Core Utilities:** `dd`, `sha256sum`, `strings`, `python3`
+* **Data Sources:** `/proc/iomem`, `/proc/kcore`, `/dev/lime` (LiME)
+* **Integration:** LinSpec (audit-aware parsing), LiME (physical RAM backend)
+* **Core Utilities:** `dd`, `sha256sum`, `strings`, `python3`, `insmod`/`rmmod`
 
 
 ---
@@ -289,7 +302,7 @@ S.I.R.E.N was built for live-response work where you can't afford to mess things
 * [x] Content validation (entropy sampling, magic bytes)
 * [x] Non-interactive CLI mode (`--quick`, `--full`, `--test`)
 * [x] Persistent operation logging
-* [ ] LiME integration as optional backend
+* [x] LiME integration as optional backend
 * [ ] Automated Volatility profile matching
 * [ ] Remote acquisition over SSH tunnel
 
