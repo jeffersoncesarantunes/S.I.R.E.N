@@ -108,12 +108,6 @@ chmod +x src/siren.sh tools/kcore_extract.py
 sudo ./src/siren.sh
 ```
 
-## Setup
-
-```bash
-chmod +x src/siren.sh tools/kcore_extract.py  # Make scripts executable
-```
-
 > S.I.R.E.N is a Bash/Python tool — no compilation required.
 
 ## Usage
