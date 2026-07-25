@@ -11,43 +11,43 @@ generate_reports() {
     size=$(stat -c%s "$file_path" 2>/dev/null || echo "0")
     local json_file="$REP_DIR/report_$timestamp.json"
 
-    if command -v python3 &>/dev/null; then
-        PY_TS="$timestamp" PY_HOST="$hostname" PY_KERNEL="$kernel" \
-        PY_METHOD="$method" PY_FILE="$(basename "$file_path")" \
-        PY_SIZE="$size" PY_HASH="$hash" \
-        PY_AUDIT="$LOADED_AUDIT" \
-        PY_AUDIT_KPTR="$AUDIT_KPTR" PY_AUDIT_PTRACE="$AUDIT_PTRACE" \
-        PY_AUDIT_SPECTRE="$AUDIT_SPECTRE" PY_AUDIT_MELTDOWN="$AUDIT_MELTDOWN" \
-        PY_VOLATILITY_PROFILE="${VOLATILITY_PROFILE:-}" \
-        PY_VOLATILITY_PLATFORM="${VOLATILITY_PLATFORM:-}" \
-        PY_VOLATILITY_MAJOR="${VOLATILITY_MAJOR:-0}" \
-        python3 -c "
-import json, os, sys
-data = {
-    'timestamp': os.environ['PY_TS'],
-    'hostname': os.environ['PY_HOST'],
-    'kernel': os.environ['PY_KERNEL'],
-    'method': os.environ['PY_METHOD'],
-    'audit_aware': os.environ.get('PY_AUDIT', 'false') == 'true',
-    'audit_params': {
-        'kptr_restrict': int(os.environ.get('PY_AUDIT_KPTR', '1')),
-        'ptrace_scope': int(os.environ.get('PY_AUDIT_PTRACE', '1')),
-        'spectre_v2': int(os.environ.get('PY_AUDIT_SPECTRE', '1')),
-        'meltdown': int(os.environ.get('PY_AUDIT_MELTDOWN', '1')),
-    },
-    'evidence': {
-        'file': os.environ['PY_FILE'],
-        'size_bytes': int(os.environ.get('PY_SIZE', '0')),
-        'sha256': os.environ['PY_HASH'],
-    },
-    'volatility': {
-        'profile': os.environ.get('PY_VOLATILITY_PROFILE', ''),
-        'platform': os.environ.get('PY_VOLATILITY_PLATFORM', ''),
-        'version': int(os.environ.get('PY_VOLATILITY_MAJOR', '0')),
-    }
-}
-json.dump(data, sys.stdout, indent=2)
-" > "$json_file"
+    local tool_dir
+    tool_dir=$(dirname "$SCRIPT_DIR")/tools
+    if command -v python3 &>/dev/null && [[ -f "$tool_dir/report_generator.py" ]]; then
+        local json_input
+        json_input=$(printf '{
+  "timestamp": "%s",
+  "hostname": "%s",
+  "kernel": "%s",
+  "method": "%s",
+  "audit_aware": %s,
+  "audit_kptr": %s,
+  "audit_ptrace": %s,
+  "audit_spectre": %s,
+  "audit_meltdown": %s,
+  "file": "%s",
+  "size": "%s",
+  "hash": "%s",
+  "vol_profile": "%s",
+  "vol_platform": "%s",
+  "vol_major": "%s"
+}' \
+            "$(printf '%s' "$timestamp" | sed 's/"/\\"/g')" \
+            "$(printf '%s' "$hostname" | sed 's/"/\\"/g')" \
+            "$(printf '%s' "$kernel" | sed 's/"/\\"/g')" \
+            "$(printf '%s' "$method" | sed 's/"/\\"/g')" \
+            "${LOADED_AUDIT:-false}" \
+            "${AUDIT_KPTR:-1}" \
+            "${AUDIT_PTRACE:-1}" \
+            "${AUDIT_SPECTRE:-1}" \
+            "${AUDIT_MELTDOWN:-1}" \
+            "$(printf '%s' "$(basename "$file_path")" | sed 's/"/\\"/g')" \
+            "$size" \
+            "$(printf '%s' "$hash" | sed 's/"/\\"/g')" \
+            "$(printf '%s' "${VOLATILITY_PROFILE:-}" | sed 's/"/\\"/g')" \
+            "$(printf '%s' "${VOLATILITY_PLATFORM:-}" | sed 's/"/\\"/g')" \
+            "${VOLATILITY_MAJOR:-0}")
+        printf '%s' "$json_input" | python3 "$tool_dir/report_generator.py" > "$json_file"
     else
         printf "{\n  \"timestamp\": \"%s\",\n  \"hostname\": \"%s\",\n  \"kernel\": \"%s\",\n  \"method\": \"%s\",\n  \"audit_aware\": %s,\n  \"evidence\": {\n    \"file\": \"%s\",\n    \"size_bytes\": %s,\n    \"sha256\": \"%s\"\n  },\n  \"volatility\": {\n    \"profile\": \"%s\",\n    \"platform\": \"%s\",\n    \"version\": %s\n  }\n}\n" \
             "$timestamp" "${hostname//\"/\\\"}" "${kernel//\"/\\\"}" "$method" \

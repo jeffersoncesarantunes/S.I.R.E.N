@@ -23,6 +23,13 @@ quick_triage_kcore() {
     echo -e "${GREEN}[+] Read ${sz} bytes${NC}"
 }
 
+create_temp_dir() {
+    local tmpdir
+    tmpdir=$(mktemp -d /tmp/siren.XXXXXX 2>/dev/null) || return 1
+    SIREN_CLEANUP_DIRS+=("$tmpdir")
+    printf '%s' "$tmpdir"
+}
+
 full_acquisition_kcore() {
     local output_file=$1
     local tool_dir
@@ -93,8 +100,12 @@ full_acquisition_lime() {
         }
     fi
 
+    local block_size=1M
+    if [[ "${3:-}" =~ ^[0-9]+[kKmMgG]?$ ]]; then
+        block_size="$3"
+    fi
     echo -e "${CYAN}[*] Acquiring physical memory via /dev/lime...${NC}"
-    dd if=/dev/lime bs=1M conv=noerror,sync status=progress > "$output_file" 2>/dev/null
+    dd if=/dev/lime bs="$block_size" conv=noerror,sync status=progress > "$output_file" 2>/dev/null
 
     rmmod lime 2>/dev/null || true
 

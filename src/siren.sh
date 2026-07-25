@@ -24,6 +24,21 @@ else
     LINSPEC_REPORT="$(dirname "$PROJECT_ROOT")/LinSpec/reports/report.json"
 fi
 
+SIREN_CLEANUP_DIRS=()
+
+cleanup_siren() {
+    local exit_code=$?
+    if [[ -n "${SIREN_TMPFILE:-}" && -f "$SIREN_TMPFILE" ]]; then
+        rm -f "$SIREN_TMPFILE"
+    fi
+    for d in "${SIREN_CLEANUP_DIRS[@]}"; do
+        [[ -d "$d" ]] && rm -rf "$d"
+    done
+    log_operation "Session ended (exit code: $exit_code)"
+    exit "$exit_code"
+}
+trap cleanup_siren EXIT INT TERM HUP
+
 mkdir -p "$BIN_DIR" "$REP_DIR" "$CHK_DIR"
 
 # shellcheck source=../lib/audit.sh
@@ -186,7 +201,7 @@ if ! $INTERACTIVE; then
     exit 0
 fi
 
-trap 'echo -e "${RED}[!] Interrupted.${NC}"; exit 1' INT TERM
+
 
 while true; do
     clear

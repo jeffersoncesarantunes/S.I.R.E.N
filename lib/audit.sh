@@ -10,21 +10,11 @@ load_linspec_audit() {
 
     [[ ! -f "$LINSPEC_REPORT" ]] && return 1
 
-    if command -v python3 &>/dev/null; then
+    local tool_dir
+    tool_dir=$(dirname "$SCRIPT_DIR")/tools
+    if command -v python3 &>/dev/null && [[ -f "$tool_dir/audit_loader.py" ]]; then
         local json
-        json=$(PY_REPORT="$LINSPEC_REPORT" python3 -c "
-import os, json, sys
-try:
-    with open(os.environ['PY_REPORT']) as f:
-        d = json.load(f)
-    print(d.get('kptr_restrict', 1))
-    print(d.get('ptrace_scope', 1))
-    print(d.get('spectre_v2', 1))
-    print(d.get('meltdown', 1))
-    print(d.get('devmem_restrict', 1))
-except Exception:
-    print('1\n1\n1\n1\n1')
-" 2>/dev/null) || return 1
+        json=$(python3 "$tool_dir/audit_loader.py" "$LINSPEC_REPORT" 2>/dev/null) || return 1
 
         local vals
         mapfile -t vals <<< "$json"

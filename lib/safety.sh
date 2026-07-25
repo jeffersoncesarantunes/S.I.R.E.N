@@ -22,18 +22,10 @@ validate_dump_content() {
         return 1
     fi
 
-    if command -v python3 &>/dev/null; then
-        PY_PATH="$file_path" python3 -c "
-import os, sys
-with open(os.environ['PY_PATH'], 'rb') as f:
-    sample = f.read(4096)
-    non_zero = sum(1 for b in sample if b != 0)
-    ratio = non_zero / len(sample)
-    if ratio < 0.01:
-        print('FAIL: dump is >99% null bytes (acquisition returned no data)')
-        sys.exit(1)
-    print(f'OK: {non_zero}/4096 non-null bytes ({ratio*100:.1f}%)')
-" 2>/dev/null && return 0
+    local tool_dir
+    tool_dir=$(dirname "$SCRIPT_DIR")/tools
+    if command -v python3 &>/dev/null && [[ -f "$tool_dir/dump_validator.py" ]]; then
+        python3 "$tool_dir/dump_validator.py" "$file_path" 2>/dev/null && return 0
     fi
 
     head -c 4096 "$file_path" | od -A x -t x1z -v | head -4
