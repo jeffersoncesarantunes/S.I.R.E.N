@@ -124,10 +124,10 @@ sudo ./src/siren.sh
 sudo ./src/siren.sh --quick                            # Quick triage: first 100MB of /proc/kcore
 sudo ./src/siren.sh --full                             # Full acquisition: ELF-aware extraction
 sudo ./src/siren.sh --lime                             # LiME physical RAM acquisition
-sudo LIME_MODULE=/path/to/lime.ko ./src/siren.sh --lime  # LiME with explicit module path
+sudo LIME_MODULE=/path/to/lime.ko ./src/siren.sh --lime   # LiME with explicit module path
 sudo ./src/siren.sh --test                             # Test acquisition pipeline
 sudo ./src/siren.sh --map                              # Display System RAM map
-sudo ./src/siren.sh --full --output /evidence/case-001/  # Custom output directory
+sudo ./src/siren.sh --full --output /evidence/case-001/    # Custom output directory
 ```
 
 
