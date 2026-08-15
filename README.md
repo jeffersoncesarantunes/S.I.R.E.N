@@ -7,8 +7,8 @@ Linux memory acquisition tool with audit-aware forensic triage.
 [![Language-Bash](https://img.shields.io/badge/Language-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
 [![License-MIT](https://img.shields.io/badge/License-MIT-EE0000?style=flat-square&logo=license&logoColor=white)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active-00A86B?style=flat-square)](#-roadmap)
-[![CI](https://img.shields.io/github/actions/workflow/status/jeffersoncesarantunes/SIREN/shellcheck.yml?style=flat-square&logo=githubactions&label=CI)](https://github.com/jeffersoncesarantunes/SIREN/actions/workflows/shellcheck.yml)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/jeffersoncesarantunes/SIREN/codeql.yml?style=flat-square&logo=githubactions&label=CodeQL)](https://github.com/jeffersoncesarantunes/SIREN/actions/workflows/codeql.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/jeffersoncesarantunes/S.I.R.E.N/shellcheck.yml?style=flat-square&logo=githubactions&label=CI)](https://github.com/jeffersoncesarantunes/S.I.R.E.N/actions/workflows/shellcheck.yml)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/jeffersoncesarantunes/S.I.R.E.N/codeql.yml?style=flat-square&logo=githubactions&label=CodeQL)](https://github.com/jeffersoncesarantunes/S.I.R.E.N/actions/workflows/codeql.yml)
 [![Docker](https://img.shields.io/badge/Docker-Alpine-2496ED?style=flat-square&logo=docker)](Dockerfile)
 [![Tested-on](https://img.shields.io/badge/Tested%20on-Arch%20Linux-1793D1?style=flat-square&logo=arch-linux)](https://security.archlinux.org/)
 [![Domain](https://img.shields.io/badge/Domain-Digital%20Forensics-8A2BE2?style=flat-square)](./docs/SAFETY_MODEL.md)
@@ -102,7 +102,7 @@ Here's the acquisition flow:
 ## Quick Start
 
 ```bash
-git clone https://github.com/jeffersoncesarantunes/SIREN.git
+git clone https://github.com/jeffersoncesarantunes/S.I.R.E.N.git
 cd SIREN
 chmod +x src/siren.sh tools/kcore_extract.py
 sudo ./src/siren.sh
@@ -121,13 +121,13 @@ sudo ./src/siren.sh
 ### Non-interactive (CLI) mode
 
 ```bash
-sudo ./src/siren.sh --quick                                 # Quick triage: first 100MB of /proc/kcore
-sudo ./src/siren.sh --full                                  # Full acquisition: ELF-aware extraction
-sudo ./src/siren.sh --lime                                  # LiME physical RAM acquisition
-sudo LIME_MODULE=/path/to/lime.ko ./src/siren.sh --lime     # LiME with explicit module path
-sudo ./src/siren.sh --test                                  # Test acquisition pipeline
-sudo ./src/siren.sh --map                                   # Display System RAM map
-sudo ./src/siren.sh --full --output /evidence/case-001/     # Custom output directory
+sudo ./src/siren.sh --quick                                  # Quick triage: first 100MB of /proc/kcore
+sudo ./src/siren.sh --full                                   # Full acquisition: ELF-aware extraction
+sudo ./src/siren.sh --lime                                   # LiME physical RAM acquisition
+sudo LIME_MODULE=/path/to/lime.ko ./src/siren.sh --lime      # LiME with explicit module path
+sudo ./src/siren.sh --test                                   # Test acquisition pipeline
+sudo ./src/siren.sh --map                                    # Display System RAM map
+sudo ./src/siren.sh --full --output /evidence/case-001/      # Custom output directory
 ```
 
 
