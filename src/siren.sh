@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-umask 022
+umask 077
 
 RED='\033[0;31m'; YELLOW='\033[1;33m'
 GREEN='\033[0;32m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -105,7 +105,12 @@ while [[ $# -gt 0 ]]; do
         --lime)  INTERACTIVE=false; MODE="lime"; shift ;;
         --test)  INTERACTIVE=false; MODE="test"; shift ;;
         --map)   INTERACTIVE=false; MODE="map"; shift ;;
-        --output) shift; OUTPUT_DIR="$1"; shift ;;
+        --output)
+            if [[ $# -lt 2 ]]; then
+                echo -e "${RED}[!] Error: --output requires a directory argument${NC}"
+                exit 1
+            fi
+            OUTPUT_DIR="$2"; shift 2 ;;
         --help)  usage ;;
         *) echo -e "${RED}[!] Unknown option: $1${NC}"; usage ;;
     esac

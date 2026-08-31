@@ -31,34 +31,40 @@ match_volatility_profile() {
     timeout_bin=$(command -v timeout 2>/dev/null || echo "")
 
     if [[ "$VOLATILITY_MAJOR" -eq 2 ]]; then
-        local cmd
-        if [[ -n "$timeout_bin" ]]; then
-            cmd="$timeout_bin 120 $VOLATILITY_BIN -f \"$dump_path\" imageinfo 2>/dev/null"
-        else
-            cmd="$VOLATILITY_BIN -f \"$dump_path\" imageinfo 2>/dev/null"
-        fi
         local out
-        out=$(eval "$cmd") || {
-            echo -e "${YELLOW}[!] volatility v2 imageinfo failed or timed out${NC}"
-            VOLATILITY_PROFILE=$(uname -r 2>/dev/null || echo "")
-            [[ -n "$VOLATILITY_PROFILE" ]] && echo -e "${YELLOW}[i] Fallback to kernel release: $VOLATILITY_PROFILE${NC}"
-            return
-        }
+        if [[ -n "$timeout_bin" ]]; then
+            out=$("$timeout_bin" 120 "$VOLATILITY_BIN" -f "$dump_path" imageinfo 2>/dev/null) || {
+                echo -e "${YELLOW}[!] volatility v2 imageinfo failed or timed out${NC}"
+                VOLATILITY_PROFILE=$(uname -r 2>/dev/null || echo "")
+                [[ -n "$VOLATILITY_PROFILE" ]] && echo -e "${YELLOW}[i] Fallback to kernel release: $VOLATILITY_PROFILE${NC}"
+                return
+            }
+        else
+            out=$("$VOLATILITY_BIN" -f "$dump_path" imageinfo 2>/dev/null) || {
+                echo -e "${YELLOW}[!] volatility v2 imageinfo failed or timed out${NC}"
+                VOLATILITY_PROFILE=$(uname -r 2>/dev/null || echo "")
+                [[ -n "$VOLATILITY_PROFILE" ]] && echo -e "${YELLOW}[i] Fallback to kernel release: $VOLATILITY_PROFILE${NC}"
+                return
+            }
+        fi
         VOLATILITY_PROFILE=$(echo "$out" | grep "Suggested Profile(s)" | sed 's/.*: //' | head -1)
     elif [[ "$VOLATILITY_MAJOR" -eq 3 ]]; then
-        local cmd
-        if [[ -n "$timeout_bin" ]]; then
-            cmd="$timeout_bin 60 $VOLATILITY_BIN -f \"$dump_path\" banners.Banners -r csv 2>/dev/null"
-        else
-            cmd="$VOLATILITY_BIN -f \"$dump_path\" banners.Banners -r csv 2>/dev/null"
-        fi
         local out
-        out=$(eval "$cmd") || {
-            echo -e "${YELLOW}[!] volatility v3 banners.Banners failed or timed out${NC}"
-            VOLATILITY_PROFILE=$(uname -r 2>/dev/null || echo "")
-            [[ -n "$VOLATILITY_PROFILE" ]] && echo -e "${YELLOW}[i] Fallback to kernel release: $VOLATILITY_PROFILE${NC}"
-            return
-        }
+        if [[ -n "$timeout_bin" ]]; then
+            out=$("$timeout_bin" 60 "$VOLATILITY_BIN" -f "$dump_path" banners.Banners -r csv 2>/dev/null) || {
+                echo -e "${YELLOW}[!] volatility v3 banners.Banners failed or timed out${NC}"
+                VOLATILITY_PROFILE=$(uname -r 2>/dev/null || echo "")
+                [[ -n "$VOLATILITY_PROFILE" ]] && echo -e "${YELLOW}[i] Fallback to kernel release: $VOLATILITY_PROFILE${NC}"
+                return
+            }
+        else
+            out=$("$VOLATILITY_BIN" -f "$dump_path" banners.Banners -r csv 2>/dev/null) || {
+                echo -e "${YELLOW}[!] volatility v3 banners.Banners failed or timed out${NC}"
+                VOLATILITY_PROFILE=$(uname -r 2>/dev/null || echo "")
+                [[ -n "$VOLATILITY_PROFILE" ]] && echo -e "${YELLOW}[i] Fallback to kernel release: $VOLATILITY_PROFILE${NC}"
+                return
+            }
+        fi
         VOLATILITY_PROFILE=$(echo "$out" | grep "Linux version" | awk -F',' '{print $2}' | head -1)
     fi
 
